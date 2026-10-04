@@ -1,5 +1,7 @@
 # 두루미 주식
 
+**개발 이어받기:** [HANDOFF.md](HANDOFF.md)에서 현재 진행 상태와 미완료 항목을 확인하세요. 에이전트 공통 지침은 [AGENTS.md](AGENTS.md), Claude 진입점은 [CLAUDE.md](CLAUDE.md)입니다. 구현은 `feat/stock-analysis-reporting` 브랜치와 Draft PR #1에 있으며 아직 main에 병합하지 않았습니다.
+
 Reusable public-company collection, source-normalized evidence, analysis inputs, and interactive HTML investment records. Actual tracked universe is controlled by config/universe.json. AAPL is a validation fixture and is not a holding/watchlist entry.
 
 ## Project layout
