@@ -7,6 +7,9 @@
   "user_requested": true,
   "period_years": 5,
   "requested_at": "2026-10-04",
-  "status": "pending",
-  "note": "Work cloud end-to-end test"
+  "status": "fulfilled",
+  "note": "Work cloud end-to-end test",
+  "result": "data/requests/apr-work-test-20261004/snapshot.json",
+  "evidence_packet": "data/history/278470/2026-10-04-apr-work-test-20261004.json",
+  "completed_at": "2026-10-04T09:31:58.734405+00:00"
 }
