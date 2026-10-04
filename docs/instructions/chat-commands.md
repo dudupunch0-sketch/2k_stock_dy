@@ -60,6 +60,11 @@
 | "목록 보여줘" | 현재 보유/관심 종목과 각 종목의 최신 보고서 경로를 보여준다. |
 | "주간 보고 지금 해줘" | `docs/instructions/weekly-run.md`를 지금 실행한다. |
 
+- 목록은 `config/universe.json`을 직접 고치지 말고 아래 명령으로만 바꾼다. 형식·한도·중복을 검사한다.
+  - 보기: `python3 -m stockdy.cli universe list` (종목별 최신 보고서 위치 포함)
+  - 추가/이동: `python3 -m stockdy.cli universe add <코드> --name <이름> --market <KRX|NASDAQ|NYSE|US> [--kind holdings] [--corp-code 8자리]`
+  - 빼기: `python3 -m stockdy.cli universe remove <코드>`
+  - 명령이 `error:`로 끝나면(한도 초과 등) 그 내용을 쉬운 말로 알리고 멈춘다.
 - 한도: 보유 3개, 관심 10개(`limits`). 초과하면 등록하지 말고 알린다.
 - `validation_fixtures`(AAPL 등)는 실제 목록이 아니다. 건드리지 않는다.
 
@@ -68,7 +73,7 @@
 0. 먼저 `requests/`에 같은 종목·오늘 날짜 요청이 있는지 본다. `fulfilled`면 1~2단계를 건너뛰고, `pending`이면 새로 만들지 말고 그 수집이 끝나기를 기다린다.
 1. `requests/<ticker소문자>-<YYYYMMDD>.json` 작성 후 main에 푸시한다. 필드: `request_id`(파일명과 같게), `ticker`, `market`, `company_name`, `kind: "detailed"`, `user_requested: true`, `period_years: 5`, `requested_at`, `status: "pending"`, 국내는 알면 `corp_code`, 미국은 알면 `cik`. 같은 id가 이미 있으면 `-2`, `-3`을 붙인다.
 2. Actions "Collect requested public filings"가 끝나면 main을 다시 받는다. 요청이 `fulfilled`인지 확인한다. `failed`/`rejected`이면 오류를 그대로 보고하고 멈춘다.
-3. `data/requests/<id>/snapshot.json`와 `data/history/<ticker>/...`를 읽고, 출처가 있는 근거로 `analysis/<ticker>.json`을 작성하거나 갱신한다. 형식은 `analysis/apr.json`을 따른다.
+3. `data/requests/<id>/snapshot.json`와 `data/history/<ticker>/...`를 읽고, 출처가 있는 근거로 `analysis/<ticker>.json`을 작성하거나 갱신한다. 새 종목이면 `python3 -m stockdy.cli analysis-template analysis/<ticker>.json`으로 빈 틀을 만든 뒤 채운다(예시는 `analysis/apr.json`). 스냅샷의 `market`에 최근 종가가 있으면 PER·PBR·종가 대비가 보고서에 자동으로 나온다. 종가는 비공식 시세이므로 분석 문장에서 "확정 가격"이라고 부르지 않는다.
 4. `python3 -m stockdy.cli report data/requests/<id>/snapshot.json --analysis analysis/<ticker>.json --out reports/<ticker>/<YYYY-MM-DD>.html`를 실행하고, 같은 명령에 `--out reports/<ticker>/latest.html`을 붙여 한 번 더 실행한다. 날짜 파일이 이미 있으면 `-2` 같은 새 이름을 쓴다.
 5. 바뀐 파일을 main에 커밋/푸시한다. 한국어 3~5줄 요약과 HTML 다운로드를 첨부한다.
 
