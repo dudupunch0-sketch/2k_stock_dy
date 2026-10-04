@@ -2,6 +2,8 @@
 
 Follow docs/instructions/workflows.md. Run Fridays at 10:00 Asia/Seoul. Use only configured holdings/watchlist from config/universe.json. Read the prior successful report and compact evidence packets under data/history. Compare the seven calendar days ending today with the prior successful run. Add only source-backed filings, results, company news, analyst/consensus updates, and upcoming events. Link regulator, issuer, original broker, or credible direct news pages; include publication dates and distinguish estimates from facts. If nothing changed, say 확인된 중요 변화 없음. Record source gaps and access failures; never invent prices, news, dates, estimates, market values, or financial facts.
 
+For each Korean ticker run `python3 -m stockdy.cli market <ticker>` once. Compare its consensus (next-year EPS, operating income), average target price and 5-day foreign/institution net buying with the previous weekly JSON or the latest snapshot `naver` block. Record a material change (for example consensus EPS or target price moving 5% or more, or a new broker report) as category `estimate` with `published_at` = the Naver consensus/report date and `source` = the Naver URL in the output; call it 컨센서스(FnGuide) or the named broker, never a company fact. If the command reports errors, list them in unverified_or_unavailable.
+
 Create data/weekly/YYYY-MM-DD.json with this structure:
 
 {
