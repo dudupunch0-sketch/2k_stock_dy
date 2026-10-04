@@ -73,7 +73,11 @@
 >
 > **5번 완료(2026-10-04)**: 사용자 지시로 즉시 실행. ChatGPT Work, 프로젝트 "두루미 주식", **GPT-6 Luna Medium**. Work가 요청 파일 커밋 `d71a5bf` → Actions run `37192418263` 성공·봇 커밋 `0c579d1`(fulfilled, `data/requests/apr-work-test-20261004/snapshot.json`) → Work가 생성기 실행 후 `reports/apr/2026-10-04-work-test.html` 커밋 `2528bc4` 및 대화에 다운로드 첨부. 소요 약 6분. Claude가 같은 명령으로 로컬 재생성해 바이트 동일 확인. 다른 파일 변경 없음. 1회 사용량 비율은 측정하지 않음(시작 전 5시간 한도 4% 남음 표시).
 >
-> 다음: 6번 금요일 10시 예약 생성(사용자 확인 후), 7번 사용 안내.
+> **6번 완료(2026-10-04)**: 사용자 승인 후 https://chatgpt.com/scheduled 에 "[두루미 주식 주간 보고] …" 예약 생성. 매주 금요일 오전 10:00 한국 표준시, GPT-6 Luna Medium, 실행마다 새 채팅. 목록에서 다음 실행 10월 9일 오전 10:00 확인. 예약 폼에는 프로젝트 선택이 없어 지시문에 저장소를 명시함. **예약 실행이 실제로 GitHub에 쓰는지는 10/9 첫 실행 후 확인 필요.** 기존 `Review quarterly data conflicts` 예약은 손대지 않음.
+>
+> **7번**: 사용 안내를 `docs/USAGE.md`로 작성.
+>
+> 다음: 10/9 첫 주간 실행 결과 확인(`reports/weekly/`, Actions·커밋), 2026 1Q 보존, `analysis/apr.json`의 2Q "잠정" 문구 갱신, 시세·컨센서스 등 미수집 항목.
 
 1. `git status`, `git log`, PR #1의 최신 diff를 읽고 최종 검수 수정과 생성 HTML의 일치를 확인한다. 필요하면 새로운 버전 파일명으로 다시 생성한다. 날짜별 보고서 보존 장치를 우회해 기존 보고서를 지우지 않는다.
 2. `.github/workflows/collect.yml`의 동시 Git 변경 처리, 요청 복구, 비밀값 비노출을 검수한다. 테스트 실행은 사용자가 요청할 때 수행한다.
