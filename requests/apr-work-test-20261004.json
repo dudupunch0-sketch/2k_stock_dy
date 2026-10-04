@@ -1,0 +1,12 @@
+{
+  "request_id": "apr-work-test-20261004",
+  "ticker": "278470",
+  "market": "KRX",
+  "corp_code": "01190568",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-10-04",
+  "status": "pending",
+  "note": "Work cloud end-to-end test"
+}
