@@ -32,21 +32,21 @@ jobs:
           git add data requests
           if ! git diff --cached --quiet; then
             git commit -m "chore: collect requested public filings"
-            branch=""
+            branch="${GITHUB_REF_NAME}"
             for attempt in 1 2 3; do
-              git fetch origin ":refs/remotes/origin/"
-              if ! git rebase "origin/"; then
+              git fetch origin "${branch}:refs/remotes/origin/${branch}"
+              if ! git rebase "origin/${branch}"; then
                 git rebase --abort || true
                 echo "::error::Collection result conflicts with a newer branch commit; resolve manually and rerun the request."
                 exit 1
               fi
-              if git push origin "HEAD:refs/heads/"; then
+              if git push origin "HEAD:refs/heads/${branch}"; then
                 exit 0
               fi
-              if [ "" -eq 3 ]; then
+              if [ "${attempt}" -eq 3 ]; then
                 echo "::error::Could not save collection result after three push attempts. Rerun the request after checking branch state."
                 exit 1
               fi
-              echo "Push raced with another commit; retrying after fetch and rebase (/3)."
+              echo "Push raced with another commit; retrying after fetch and rebase (${attempt}/3)."
             done
           fi
