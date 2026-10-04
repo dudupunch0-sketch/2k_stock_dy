@@ -13,7 +13,7 @@ def save(path, value):
     tmp.replace(path)
 
 def evidence_packet(data,rid,target):
-    return {"request_id":rid,"source_snapshot":str(target.relative_to(ROOT)),"company":data["company"],"as_of":data["as_of"],"collected_at":data["collected_at"],"periods":[{"year":x["year"],"report":x["report"],"basis":x.get("period_basis"),"published":x.get("published"),"source_url":x.get("source_url"),"metrics":x.get("metrics",{}),"ytd_metrics":x.get("ytd_metrics",{}),"metric_sources":x.get("metric_sources",{})} for x in data.get("reports",[])],"sources":data.get("sources",[]),"market":data.get("market",{}),"analysis":data.get("analysis",{})}
+    return {"request_id":rid,"source_snapshot":str(target.relative_to(ROOT)),"company":data["company"],"as_of":data["as_of"],"collected_at":data["collected_at"],"periods":[{"year":x["year"],"report":x["report"],"basis":x.get("period_basis"),"published":x.get("published"),"source_url":x.get("source_url"),"metrics":x.get("metrics",{}),"ytd_metrics":x.get("ytd_metrics",{}),"standalone_metrics":x.get("standalone_metrics",{}),"instant_metrics":x.get("instant_metrics",{}),"metric_sources":x.get("metric_sources",{})} for x in data.get("reports",[])],"sources":data.get("sources",[]),"market":data.get("market",{}),"analysis":data.get("analysis",{})}
 
 def main():
     key=os.environ.get("DART_API_KEY")

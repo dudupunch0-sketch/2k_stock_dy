@@ -1,0 +1,11 @@
+{
+  "request_id": "apr-refresh-20261004",
+  "ticker": "278470",
+  "market": "KRX",
+  "corp_code": "01190568",
+  "kind": "detailed",
+  "period_years": 5,
+  "requested_at": "2026-10-04",
+  "status": "pending",
+  "note": "Refresh APR filing data after merge using the configured GitHub Actions DART_API_KEY secret."
+}

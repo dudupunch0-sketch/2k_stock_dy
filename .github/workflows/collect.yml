@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: true
       - uses: actions/setup-python@v5
         with:
@@ -31,5 +32,21 @@ jobs:
           git add data requests
           if ! git diff --cached --quiet; then
             git commit -m "chore: collect requested public filings"
-            git push
+            branch=""
+            for attempt in 1 2 3; do
+              git fetch origin ":refs/remotes/origin/"
+              if ! git rebase "origin/"; then
+                git rebase --abort || true
+                echo "::error::Collection result conflicts with a newer branch commit; resolve manually and rerun the request."
+                exit 1
+              fi
+              if git push origin "HEAD:refs/heads/"; then
+                exit 0
+              fi
+              if [ "" -eq 3 ]; then
+                echo "::error::Could not save collection result after three push attempts. Rerun the request after checking branch state."
+                exit 1
+              fi
+              echo "Push raced with another commit; retrying after fetch and rebase (/3)."
+            done
           fi

@@ -39,11 +39,20 @@
         "net_income": 11398827028,
         "net_income_parent": 11398827028,
         "operating_cash_flow": 4585024805,
-        "capex": 4454194805,
+        "capex": 4454194805
+      },
+      "standalone_metrics": {
+        "revenue": 259146144182,
+        "operating_income": 14273152154,
+        "net_income": 11398827028,
+        "net_income_parent": 11398827028,
+        "operating_cash_flow": 4585024805,
+        "capex": 4454194805
+      },
+      "instant_metrics": {
         "assets": 126428830150,
         "equity": 66001080624,
-        "equity_parent": 66001080624,
-        "eps": 1621
+        "equity_parent": 66001080624
       },
       "metric_sources": {}
     },
@@ -72,11 +81,20 @@
         "net_income": 29954676293,
         "net_income_parent": 29954676293,
         "operating_cash_flow": 31630786168,
-        "capex": 5699661194,
+        "capex": 5699661194
+      },
+      "standalone_metrics": {
+        "revenue": 397698119336,
+        "operating_income": 39228479397,
+        "net_income": 29954676293,
+        "net_income_parent": 29954676293,
+        "operating_cash_flow": 31630786168,
+        "capex": 5699661194
+      },
+      "instant_metrics": {
         "assets": 184122622814,
         "equity": 100257994716,
-        "equity_parent": 100257994716,
-        "eps": 4212
+        "equity_parent": 100257994716
       },
       "metric_sources": {}
     },
@@ -105,11 +123,20 @@
         "net_income": 81546050952,
         "net_income_parent": 81546050952,
         "operating_cash_flow": 107840961394,
-        "capex": 9658753988,
+        "capex": 9658753988
+      },
+      "standalone_metrics": {
+        "revenue": 523809364559,
+        "operating_income": 104193724865,
+        "net_income": 81546050952,
+        "net_income_parent": 81546050952,
+        "operating_cash_flow": 107840961394,
+        "capex": 9658753988
+      },
+      "instant_metrics": {
         "assets": 287309488243,
         "equity": 196948868778,
-        "equity_parent": 196948868778,
-        "eps": 11096
+        "equity_parent": 196948868778
       },
       "metric_sources": {}
     },
@@ -138,11 +165,20 @@
         "net_income": 107590435967,
         "net_income_parent": 107590435967,
         "operating_cash_flow": 79124161730,
-        "capex": 45033767690,
+        "capex": 45033767690
+      },
+      "standalone_metrics": {
+        "revenue": 722753862301,
+        "operating_income": 122705544449,
+        "net_income": 107590435967,
+        "net_income_parent": 107590435967,
+        "operating_cash_flow": 79124161730,
+        "capex": 45033767690
+      },
+      "instant_metrics": {
         "assets": 565143563187,
         "equity": 323524073990,
-        "equity_parent": 323524073990,
-        "eps": 2819
+        "equity_parent": 323524073990
       },
       "metric_sources": {}
     },
@@ -171,11 +207,20 @@
         "net_income": 289654813287,
         "net_income_parent": 289654813287,
         "operating_cash_flow": 341046397295,
-        "capex": 15411405167,
+        "capex": 15411405167
+      },
+      "standalone_metrics": {
+        "revenue": 1527344973381,
+        "operating_income": 365520628934,
+        "net_income": 289654813287,
+        "net_income_parent": 289654813287,
+        "operating_cash_flow": 341046397295,
+        "capex": 15411405167
+      },
+      "instant_metrics": {
         "assets": 771737546894,
         "equity": 445799810314,
-        "equity_parent": 445799810314,
-        "eps": 7718
+        "equity_parent": 445799810314
       },
       "metric_sources": {}
     },
@@ -197,6 +242,8 @@
         "weighted_shares": null
       },
       "ytd_metrics": {},
+      "standalone_metrics": {},
+      "instant_metrics": {},
       "metric_sources": {}
     },
     {
@@ -224,11 +271,20 @@
         "net_income": 117263942770,
         "net_income_parent": 117263942770,
         "operating_cash_flow": 4270874944,
-        "capex": 5072895132,
+        "capex": 5072895132
+      },
+      "standalone_metrics": {
+        "revenue": 593355595556,
+        "operating_income": 152271694994,
+        "net_income": 117263942770,
+        "net_income_parent": 117263942770,
+        "operating_cash_flow": null,
+        "capex": null
+      },
+      "instant_metrics": {
         "assets": 952996015797,
         "equity": 506580289845,
-        "equity_parent": 506580289684,
-        "eps": 3132
+        "equity_parent": 506580289684
       },
       "metric_sources": {}
     },
@@ -250,6 +306,8 @@
         "weighted_shares": null
       },
       "ytd_metrics": {},
+      "standalone_metrics": {},
+      "instant_metrics": {},
       "metric_sources": {}
     }
   ],

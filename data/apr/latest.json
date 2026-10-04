@@ -4208,11 +4208,7 @@
         "net_income": 11398827028,
         "net_income_parent": 11398827028,
         "operating_cash_flow": 4585024805,
-        "capex": 4454194805,
-        "assets": 126428830150,
-        "equity": 66001080624,
-        "equity_parent": 66001080624,
-        "eps": 1621
+        "capex": 4454194805
       },
       "standalone_metrics": {
         "revenue": 259146144182,
@@ -4223,7 +4219,12 @@
         "capex": 4454194805
       },
       "receipt_no": "20220331002148",
-      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20220331002148"
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20220331002148",
+      "instant_metrics": {
+        "assets": 126428830150,
+        "equity": 66001080624,
+        "equity_parent": 66001080624
+      }
     },
     {
       "year": 2022,
@@ -7504,11 +7505,7 @@
         "net_income": 29954676293,
         "net_income_parent": 29954676293,
         "operating_cash_flow": 31630786168,
-        "capex": 5699661194,
-        "assets": 184122622814,
-        "equity": 100257994716,
-        "equity_parent": 100257994716,
-        "eps": 4212
+        "capex": 5699661194
       },
       "standalone_metrics": {
         "revenue": 397698119336,
@@ -7519,7 +7516,12 @@
         "capex": 5699661194
       },
       "receipt_no": "20230329001036",
-      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20230329001036"
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20230329001036",
+      "instant_metrics": {
+        "assets": 184122622814,
+        "equity": 100257994716,
+        "equity_parent": 100257994716
+      }
     },
     {
       "year": 2023,
@@ -10667,11 +10669,7 @@
         "net_income": 81546050952,
         "net_income_parent": 81546050952,
         "operating_cash_flow": 107840961394,
-        "capex": 9658753988,
-        "assets": 287309488243,
-        "equity": 196948868778,
-        "equity_parent": 196948868778,
-        "eps": 11096
+        "capex": 9658753988
       },
       "standalone_metrics": {
         "revenue": 523809364559,
@@ -10682,7 +10680,12 @@
         "capex": 9658753988
       },
       "receipt_no": "20240321000964",
-      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20240321000964"
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20240321000964",
+      "instant_metrics": {
+        "assets": 287309488243,
+        "equity": 196948868778,
+        "equity_parent": 196948868778
+      }
     },
     {
       "year": 2024,
@@ -14058,11 +14061,7 @@
         "net_income": 107590435967,
         "net_income_parent": 107590435967,
         "operating_cash_flow": 79124161730,
-        "capex": 45033767690,
-        "assets": 565143563187,
-        "equity": 323524073990,
-        "equity_parent": 323524073990,
-        "eps": 2819
+        "capex": 45033767690
       },
       "standalone_metrics": {
         "revenue": 722753862301,
@@ -14073,7 +14072,12 @@
         "capex": 45033767690
       },
       "receipt_no": "20250321001576",
-      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20250321001576"
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20250321001576",
+      "instant_metrics": {
+        "assets": 565143563187,
+        "equity": 323524073990,
+        "equity_parent": 323524073990
+      }
     },
     {
       "year": 2025,
@@ -19218,11 +19222,7 @@
         "net_income": 289654813287,
         "net_income_parent": 289654813287,
         "operating_cash_flow": 341046397295,
-        "capex": 15411405167,
-        "assets": 771737546894,
-        "equity": 445799810314,
-        "equity_parent": 445799810314,
-        "eps": 7718
+        "capex": 15411405167
       },
       "standalone_metrics": {
         "revenue": 1527344973381,
@@ -19233,7 +19233,12 @@
         "capex": 15411405167
       },
       "receipt_no": "20260323001257",
-      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260323001257"
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260323001257",
+      "instant_metrics": {
+        "assets": 771737546894,
+        "equity": 445799810314,
+        "equity_parent": 445799810314
+      }
     },
     {
       "year": 2026,
@@ -23035,11 +23040,7 @@
         "net_income": 117263942770,
         "net_income_parent": 117263942770,
         "operating_cash_flow": 4270874944,
-        "capex": 5072895132,
-        "assets": 952996015797,
-        "equity": 506580289845,
-        "equity_parent": 506580289684,
-        "eps": 3132
+        "capex": 5072895132
       },
       "standalone_metrics": {
         "revenue": 593355595556,
@@ -23049,7 +23050,12 @@
         "operating_cash_flow": null,
         "capex": null
       },
-      "receipt_no": "20260515001577"
+      "receipt_no": "20260515001577",
+      "instant_metrics": {
+        "assets": 952996015797,
+        "equity": 506580289845,
+        "equity_parent": 506580289684
+      }
     },
     {
       "year": 2026,
