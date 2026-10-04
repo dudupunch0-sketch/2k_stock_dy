@@ -6,6 +6,9 @@
   "kind": "detailed",
   "period_years": 5,
   "requested_at": "2026-10-04",
-  "status": "pending",
-  "note": "Refresh APR filing data after merge using the configured GitHub Actions DART_API_KEY secret."
+  "status": "fulfilled",
+  "note": "Refresh APR filing data after merge using the configured GitHub Actions DART_API_KEY secret.",
+  "result": "data/requests/apr-refresh-20261004/snapshot.json",
+  "evidence_packet": "data/history/278470/2026-10-04-apr-refresh-20261004.json",
+  "completed_at": "2026-10-04T08:09:37.369287+00:00"
 }
