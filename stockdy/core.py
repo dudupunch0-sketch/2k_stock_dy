@@ -194,10 +194,17 @@ def normalize_accounts(data):
           "assets":amount("BS",("ifrs-full_Assets",),("자산총계",)),
           "equity":amount("BS",("ifrs-full_Equity",),("자본총계",)),
           "equity_parent":amount("BS",("ifrs-full_EquityAttributableToOwnersOfParent",),("지배기업 소유주지분",)),
-          "eps":amount("CIS",("ifrs-full_DilutedEarningsLossPerShare",),("보통주 희석주당손익",)),
           "weighted_shares":None})
+        # One EPS line (diluted, else basic) for every field so periods stay comparable.
+        eps_line=next(((ids,labels) for ids,labels in ((("ifrs-full_DilutedEarningsLossPerShare",),("보통주 희석주당손익","보통주 희석주당이익")),(("ifrs-full_BasicEarningsLossPerShare",),("보통주 기본주당손익","보통주 기본주당이익"))) if amount("CIS",ids,labels) is not None),None)
+        metrics["eps"]=amount("CIS",*eps_line) if eps_line else None
+        metrics["eps_basis"]=("희석" if "Diluted" in eps_line[0][0] else "기본") if eps_line else None
         instant={k:metrics.get(k) for k in ("assets","liabilities","cash","equity","equity_parent")}
         ytd.pop("eps",None)
+        if is_interim and eps_line:
+            ytd["eps"]=amount("CIS",*eps_line,field="thstrm_add_amount") if report.get("report")!="1Q" else metrics["eps"]
+            report["prior_metrics"]["quarter"]["eps"]=amount("CIS",*eps_line,field="frmtrm_q_amount")
+            report["prior_metrics"]["ytd"]["eps"]=amount("CIS",*eps_line,field="frmtrm_add_amount") if report.get("report")!="1Q" else report["prior_metrics"]["quarter"]["eps"]
         report["metrics"]=metrics
         report_receipts={row.get("rcept_no") for row in rows if row.get("rcept_no")}
         if len(report_receipts)==1:
@@ -322,9 +329,25 @@ def earnings_base(reports):
     for r in sorted(interims,key=lambda r:r["report"],reverse=True):
         ytd=(r.get("ytd_metrics") or {}).get(key); prior=((r.get("prior_metrics") or {}).get("ytd") or {}).get(key)
         if ytd is not None and prior is not None and am.get(key) is not None:
-            return {"net":am[key]+ytd-prior,"kind":"ttm","numerator":numerator,
+            e_ytd=(r.get("ytd_metrics") or {}).get("eps"); e_prior=((r.get("prior_metrics") or {}).get("ytd") or {}).get("eps")
+            eps=am["eps"]+e_ytd-e_prior if None not in (am.get("eps"),e_ytd,e_prior) and am.get("eps_basis")==r.get("metrics",{}).get("eps_basis") else None
+            return {"net":am[key]+ytd-prior,"eps":eps,"kind":"ttm","numerator":numerator,
                     "label":f"최근 12개월(TTM) = {annual['year']} 연간 + {r['year']} {r['report']} 누적 − {annual['year']} 같은 기간 누적"}
-    return {"net":am.get(key),"kind":"annual","numerator":numerator,"label":f"{annual['year']} 연간"}
+    return {"net":am.get(key),"eps":am.get("eps"),"kind":"annual","numerator":numerator,"label":f"{annual['year']} 연간"}
+
+
+FORWARD_BASIS={"consensus":"컨센서스","analyst":"개별 증권사 추정","guidance":"회사 가이던스 기반 추정","ai":"AI 추정"}
+
+
+def forward_valuation(analysis, cap, price, currency):
+    """Forward PER only from an explicitly sourced estimate in the analysis input."""
+    f=(analysis.get("valuation") or {}).get("forward") or {}
+    basis=FORWARD_BASIS.get(f.get("basis"))
+    if not basis or not f.get("year"): return None
+    per=cap/f["net_income"] if cap and f.get("net_income") and f["net_income"]>0 else (price/f["eps"] if price and f.get("eps") and f["eps"]>0 else None)
+    if per is None: return None
+    amount=fmt(f["net_income"],currency) if f.get("net_income") else f"EPS {f['eps']:,.0f}"
+    return {"per":per,"text":f"Forward PER {per:.1f}배 ({f['year']}E 순이익 {amount}, {basis})","note":f.get("note",""),"source":f.get("source")}
 
 
 def latest_instant(reports):
@@ -337,7 +360,7 @@ def latest_instant(reports):
 def build_report(data, out: Path):
     validate_snapshot(data)
     for r in data.get("reports",[]):
-        if r.get("items") and ("liabilities" not in r.get("metrics",{}) or (r.get("report")!="annual" and "prior_metrics" not in r)):
+        if r.get("items") and "eps_basis" not in r.get("metrics",{}):
             normalize_accounts({"reports":[r]})  # enrich snapshots saved before comparatives were extracted
     reports=sorted(data.get("reports",[]),key=lambda r:(r["year"],r["report"]))
     years=[r for r in reports if r["report"]=="annual"]
@@ -364,13 +387,17 @@ def build_report(data, out: Path):
     valuation_card=(f'<strong>PER {per_now:.1f}배' if per_now else '<strong>PER N/A')+(f' · PBR {pbr_now:.1f}배' if pbr_now else '')+'</strong><small>'+html.escape(" · ".join(x for x in [
         (f"시가총액(추정) {fmt(cap,currency)}" if cap else "종가 없음 · 시가총액 미산출"),
         (f"이익: {base['label']}" if per_now else ""),
-        (f"자본: {bs['year']} {bs['report']} 말" if pbr_now else "")] if x))+'</small>'
+        (f"자본: {bs['year']} {bs['report']} 말" if pbr_now else ""),
+        (f"EPS {base['eps']:,.0f} ({'TTM' if base['kind']=='ttm' else '연간'})" if base.get("eps") is not None else "")] if x))
+    fwd=forward_valuation(analysis,cap,price,currency)
+    valuation_card+=('<br><b>'+html.escape(fwd["text"])+'</b>'+(' '+html.escape(fwd["note"]) if fwd["note"] else '')+(f' <a href="{html.escape(safe_link(fwd["source"]),quote=True)}" target="_blank" rel="noopener">근거</a>' if fwd.get("source") else '')) if fwd else '<br>Forward PER: 출처 있는 이익 추정 없음'
+    valuation_card+='</small>'
     q=next((r for r in reversed(interim_rows) if (r.get("prior_metrics") or {}).get("quarter")),None)
     def yoy(cur,prev): return cur/prev-1 if cur is not None and prev not in (None,0) and prev>0 else None
     if q:
         qm=q.get("metrics",{}); qp=q["prior_metrics"]["quarter"]
-        g_rev,g_op=yoy(qm.get("revenue"),qp.get("revenue")),yoy(qm.get("operating_income"),qp.get("operating_income"))
-        growth_card=f'<label>최근 분기 성장 ({html.escape(str(q["year"])+" "+q["report"])}, 전년 같은 분기 대비)</label><strong>매출 {pct(g_rev)}</strong><small>영업이익 {pct(g_op)} · 분기 매출 {fmt(qm.get("revenue"),currency)}</small>'
+        g_rev,g_op,g_eps=yoy(qm.get("revenue"),qp.get("revenue")),yoy(qm.get("operating_income"),qp.get("operating_income")),yoy(qm.get("eps"),qp.get("eps"))
+        growth_card=f'<label>최근 분기 성장 ({html.escape(str(q["year"])+" "+q["report"])}, 전년 같은 분기 대비)</label><strong>매출 {pct(g_rev)} · EPS {pct(g_eps)}</strong><small>영업이익 {pct(g_op)} · 분기 매출 {fmt(qm.get("revenue"),currency)} · 분기 EPS {"N/A" if qm.get("eps") is None else format(qm["eps"],",.0f")}</small>'
     else:
         g=yoy((latest or {}).get("metrics",{}).get("revenue"),(years[-2] if len(years)>1 else {}).get("metrics",{}).get("revenue"))
         growth_card=f'<label>최근 연간 매출 ({html.escape(str((latest or {}).get("year","—")))})</label><strong>{fmt((latest or {}).get("metrics",{}).get("revenue"),currency)}</strong><small>전년 대비 {pct(g)}</small>'
@@ -469,9 +496,9 @@ def interim_table(rows,currency="KRW"):
             cur,prev=m.get(k),pq.get(k)
             return pct(cur/prev-1) if cur is not None and prev not in (None,0) and prev>0 else "N/A"
         debt=safe_ratio(m.get("liabilities"),m.get("equity"))
-        cells=[fmt(m.get("revenue"),currency),yoy("revenue"),fmt(m.get("operating_income"),currency),yoy("operating_income"),fmt(m.get("net_income"),currency),fmt(m.get("operating_cash_flow"),currency),"N/A" if debt is None else f"{debt*100:.0f}%"]
+        cells=[fmt(m.get("revenue"),currency),yoy("revenue"),fmt(m.get("operating_income"),currency),yoy("operating_income"),fmt(m.get("net_income"),currency),("N/A" if m.get("eps") is None else format(m["eps"],",.0f")),yoy("eps"),fmt(m.get("operating_cash_flow"),currency),"N/A" if debt is None else f"{debt*100:.0f}%"]
         out.append("<tr><th>"+html.escape(str(r.get("year"))+" "+str(r.get("report")))+"<small>"+html.escape(label)+" · 공시 "+html.escape(str(r.get("published") or "날짜 미확인"))+"</small></th>"+"".join("<td>"+html.escape(c)+"</td>" for c in cells)+f'<td><a href="{html.escape(url,quote=True)}" target="_blank" rel="noopener">원문 ↗</a></td></tr>')
-    return "<div class=scroll><table><thead><tr><th>기간 / 기준</th><th>매출</th><th>매출 YoY</th><th>영업이익</th><th>영업이익 YoY</th><th>순이익</th><th>영업현금흐름(누적)</th><th>부채비율</th><th>출처</th></tr></thead><tbody>"+"".join(out)+"</tbody></table></div><p class=\"muted\">YoY는 전년 같은 분기 대비(같은 공시의 비교 수치)입니다.</p>"
+    return "<div class=scroll><table><thead><tr><th>기간 / 기준</th><th>매출</th><th>매출 YoY</th><th>영업이익</th><th>영업이익 YoY</th><th>순이익</th><th>EPS</th><th>EPS YoY</th><th>영업현금흐름(누적)</th><th>부채비율</th><th>출처</th></tr></thead><tbody>"+"".join(out)+"</tbody></table></div><p class=\"muted\">YoY는 전년 같은 분기 대비(같은 공시의 비교 수치)입니다.</p>"
 
 def chart_svg(rows,currency="KRW"):
     series=[(r['year'],r.get('metrics',{}).get('revenue')) for r in rows if r.get('metrics',{}).get('revenue') is not None]

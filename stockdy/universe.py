@@ -93,6 +93,8 @@ TEMPLATE = {
                      "next_check": "다음 확인 시점(예: 3Q 실적 발표)", "source": "https://..."}],
     "valuation": {"method": "최근 12개월(TTM) 지배주주 순이익(없으면 최근 연간) × (1+성장률)^2 × PER ÷ 주식수. 모든 값은 AI 가정.",
                   "scenarios": {"bear": {"profit_growth": -0.15, "pe": 10}, "base": {"profit_growth": 0.10, "pe": 15},
-                                "bull": {"profit_growth": 0.25, "pe": 20}}},
+                                "bull": {"profit_growth": 0.25, "pe": 20}},
+                  "forward": {"year": 2026, "basis": "consensus | analyst | guidance | ai", "net_income": 0,
+                              "note": "추정 출처와 계산 방법. 근거 없으면 forward 항목 자체를 지운다.", "source": "https://..."}},
     "limitations": ["확인하지 못한 자료와 이유"],
 }

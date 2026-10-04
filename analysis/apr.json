@@ -172,6 +172,13 @@
         "pe": 35,
         "rationale": "제품·지역 채널 확대와 높은 이익률 유지; 낙관 가정"
       }
+    },
+    "forward": {
+      "year": 2026,
+      "basis": "guidance",
+      "net_income": 566200000000,
+      "note": "한국투자증권 보고서가 인용한 회사 2026 가이던스(매출 3조원, 영업이익률 24–26%)의 중간값 영업이익 7,500억원에 1H26 실제 지배주주 순이익/영업이익 비율 0.755를 곱한 값. 범위 5,435억–5,888억원. 컨센서스 아님.",
+      "source": "https://securities.koreainvestment.com/main/research/research/StrategyDetail.jsp?id=158017&jkGubun=6"
     }
   },
   "limitations": [
