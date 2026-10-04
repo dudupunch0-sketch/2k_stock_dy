@@ -1,1 +1,15 @@
-{"request_id":"192820-20261004","ticker":"192820","market":"KRX","company_name":"코스맥스","kind":"detailed","user_requested":true,"period_years":5,"requested_at":"2026-10-04","status":"pending"}
+{
+  "request_id": "192820-20261004",
+  "ticker": "192820",
+  "market": "KRX",
+  "company_name": "코스맥스",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-10-04",
+  "status": "fulfilled",
+  "corp_code": "01009789",
+  "result": "data/requests/192820-20261004/snapshot.json",
+  "evidence_packet": "data/history/192820/2026-10-04-192820-20261004.json",
+  "completed_at": "2026-10-04T10:53:29.316964+00:00"
+}
