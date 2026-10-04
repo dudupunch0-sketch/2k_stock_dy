@@ -1,7 +1,7 @@
 from __future__ import annotations
 import argparse,json,os
 from pathlib import Path
-from .core import ROOT,build_report,collect_apr,collect_sec
+from .core import ROOT,build_report,collect_apr,collect_sec,fetch_quote
 from .delta import write_delta
 from .weekly import build_weekly_report
 from . import universe
@@ -10,7 +10,7 @@ def main():
  p=argparse.ArgumentParser(description="Stockdy research collection and report tools"); sub=p.add_subparsers(dest="cmd",required=True)
  c=sub.add_parser("collect-apr");c.add_argument("--out",type=Path,default=ROOT/"data/apr/latest.json")
  s=sub.add_parser("collect-sec");s.add_argument("ticker",nargs="?",default="AAPL");s.add_argument("--out",type=Path)
- r=sub.add_parser("report");r.add_argument("data",type=Path);r.add_argument("--analysis",type=Path);r.add_argument("--out",type=Path,default=ROOT/"reports/apr/latest.html")
+ r=sub.add_parser("report");r.add_argument("data",type=Path);r.add_argument("--analysis",type=Path);r.add_argument("--out",type=Path,default=ROOT/"reports/apr/latest.html");r.add_argument("--refresh-price",action="store_true",help="fetch the latest close when the snapshot has none")
  d=sub.add_parser("weekly-diff");d.add_argument("previous",type=Path);d.add_argument("current",type=Path);d.add_argument("--out",type=Path,default=ROOT/"reports/weekly/latest.json")
  w=sub.add_parser("weekly-report");w.add_argument("data",type=Path);w.add_argument("--out",type=Path)
  u=sub.add_parser("universe",help="list/add/remove holdings and watchlist");us=u.add_subparsers(dest="action",required=True)
@@ -42,6 +42,12 @@ def main():
    analysis_root=(ROOT/"analysis").resolve();analysis_path=analysis_path.resolve()
    if analysis_root not in analysis_path.parents or not analysis_path.is_file(): p.error("--analysis must name an existing JSON file under analysis/")
    data["analysis"]=json.loads(analysis_path.read_text(encoding="utf-8"))
+  if a.refresh_price and not (data.get("market") or {}).get("price"):
+   c=data["company"];sym=c["ticker"]
+   for candidate in ([sym+".KS",sym+".KQ"] if c.get("market")=="KRX" else [sym.replace(".","-")]):
+    quote=fetch_quote(candidate,c.get("shares_outstanding"),c.get("currency"))
+    if quote.get("price"): data["market"]=quote;break
+   print(f"Price: {data.get('market',{}).get('price')} ({data.get('market',{}).get('price_date')})")
   output=a.out if a.out.is_absolute() else ROOT/a.out
   build_report(data,output);print(f"Rendered report -> {output}")
  elif a.cmd=="weekly-diff":

@@ -74,7 +74,11 @@
 1. `requests/<ticker소문자>-<YYYYMMDD>.json` 작성 후 main에 푸시한다. 필드: `request_id`(파일명과 같게), `ticker`, `market`, `company_name`, `kind: "detailed"`, `user_requested: true`, `period_years: 5`, `requested_at`, `status: "pending"`, 국내는 알면 `corp_code`, 미국은 알면 `cik`. 같은 id가 이미 있으면 `-2`, `-3`을 붙인다.
 2. Actions "Collect requested public filings"가 끝나면 main을 다시 받는다. 요청이 `fulfilled`인지 확인한다. `failed`/`rejected`이면 오류를 그대로 보고하고 멈춘다.
 3. `data/requests/<id>/snapshot.json`와 `data/history/<ticker>/...`를 읽고, 출처가 있는 근거로 `analysis/<ticker>.json`을 작성하거나 갱신한다. 새 종목이면 `python3 -m stockdy.cli analysis-template analysis/<ticker>.json`으로 빈 틀을 만든 뒤 채운다(예시는 `analysis/apr.json`). 스냅샷의 `market`에 최근 종가가 있으면 PER·PBR·종가 대비가 보고서에 자동으로 나온다. 종가는 비공식 시세이므로 분석 문장에서 "확정 가격"이라고 부르지 않는다.
-4. `python3 -m stockdy.cli report data/requests/<id>/snapshot.json --analysis analysis/<ticker>.json --out reports/<ticker>/<YYYY-MM-DD>.html`를 실행하고, 같은 명령에 `--out reports/<ticker>/latest.html`을 붙여 한 번 더 실행한다. 날짜 파일이 이미 있으면 `-2` 같은 새 이름을 쓴다.
+   - 분석은 모두 한국어로 쓰고 `as_of`(작성일)를 넣는다.
+   - 밸류에이션 기준 이익은 생성기가 자동으로 고른다(분기 자료가 있으면 최근 12개월 TTM). 분석 문장의 PER·시나리오 설명도 같은 기준으로 쓴다. 연간 실적만 쓰면 고성장 기업을 크게 고평가로 오판할 수 있다.
+   - `checkpoints`(가설 점검표)를 4~6개 쓴다. 각 항목은 지금 값(출처·기간), 가설이 깨지는 신호, 다음 확인 시점을 적는다. 신호 기준은 AI 판단이므로 과장하지 않는다.
+   - 보고서에 이미 표로 나오는 숫자(연도별 재무, 분기 YoY, 부채비율)를 문장으로 다시 나열하지 말고, 그 숫자가 투자 판단에 무슨 의미인지 쓴다.
+4. `python3 -m stockdy.cli report data/requests/<id>/snapshot.json --analysis analysis/<ticker>.json --refresh-price --out reports/<ticker>/<YYYY-MM-DD>.html`를 실행하고, 같은 명령에 `--out reports/<ticker>/latest.html`을 붙여 한 번 더 실행한다. 날짜 파일이 이미 있으면 `-2` 같은 새 이름을 쓴다.
 5. 바뀐 파일을 main에 커밋/푸시한다. 한국어 3~5줄 요약과 HTML 다운로드를 첨부한다.
 
 ## 금지
