@@ -1,26 +1,28 @@
 # 두루미 주식
 
-**개발 이어받기:** [HANDOFF.md](HANDOFF.md)에서 현재 진행 상태와 미완료 항목을 확인하세요. 에이전트 공통 지침은 [AGENTS.md](AGENTS.md), Claude 진입점은 [CLAUDE.md](CLAUDE.md)입니다. 구현은 `feat/stock-analysis-reporting` 브랜치와 Draft PR #1에 있으며 아직 main에 병합하지 않았습니다.
+ChatGPT Work에 짧게 말하면("코스맥스 분석해줘") 공시·시세·컨센서스를 모아 근거가 붙은 투자 분석 HTML을 만들고, 매주 금요일 보유·관심 종목의 변화를 정리하는 도구입니다. 매매 지시는 하지 않습니다.
 
-Reusable public-company collection, source-normalized evidence, analysis inputs, and interactive HTML investment records. Actual tracked universe is controlled by config/universe.json. AAPL is a validation fixture and is not a holding/watchlist entry.
+- 쓰는 법: [docs/USAGE.md](docs/USAGE.md)
+- 현재 상태와 다음 할 일: [HANDOFF.md](HANDOFF.md)
+- 에이전트 지침: [AGENTS.md](AGENTS.md), Claude 진입점 [CLAUDE.md](CLAUDE.md), Work 명령 규칙 [docs/instructions/chat-commands.md](docs/instructions/chat-commands.md)
 
-## Project layout
+## 구성
 
-- stockdy/: DART and SEC public filing adapters, metric normalization, schema validation, weekly diffs, and self-contained HTML report generators.
-- config/universe.json: explicit holdings/watchlist only. Manual on-demand requests do not silently alter this list.
-- requests/: per-request queue and completion/error state.
-- data/requests/: request-specific source snapshot. data/history/: compact immutable source/evidence packet for comparisons.
-- analysis/: AI-authored, sourced company analysis/scenario inputs.
-- journal/: user-authored thesis and trading notes, append-only and separate.
-- reports/: immutable dated detailed/weekly HTML, with latest.html pointer.
-- docs/instructions/: Work runbook and reusable Friday prompt.
+- `stockdy/`: DART·SEC 수집, 시세(Yahoo)·네이버증권 컨센서스, 재무 정규화(분기/누적/TTM), 상세·주간 HTML 생성기, CLI
+- `config/universe.json`: 보유·관심 종목(주간 보고 대상). `universe` 명령으로만 바꾼다. AAPL은 검증용 예시.
+- `requests/` → GitHub Actions 수집 → `data/requests/<id>/snapshot.json`, `data/history/`
+- `analysis/`: 출처가 붙은 AI 분석 입력. `reports/`: 날짜별 보고서(덮어쓰기 금지)와 `latest.html`
+- `docs/instructions/`: Work 실행 규칙과 금요일 주간 보고 지시문
+- `tests/`: 네트워크 없이 도는 단위 테스트
 
-## Local commands
+## 명령
 
-python3 -m stockdy.cli collect-apr
-python3 -m stockdy.cli collect-sec AAPL
-python3 -m stockdy.cli report data/apr/latest.json --analysis analysis/apr.json --out reports/apr/latest.html
-python3 -m stockdy.cli weekly-diff PREVIOUS.json CURRENT.json --out reports/weekly/diff.json
+```sh
+python3 -m unittest discover -s tests -t .
+python3 -m stockdy.cli universe list
+python3 -m stockdy.cli market 192820
+python3 -m stockdy.cli report data/requests/<id>/snapshot.json --analysis analysis/<name>.json --refresh-market --out reports/<folder>/YYYY-MM-DD.html
 python3 -m stockdy.cli weekly-report data/weekly/YYYY-MM-DD.json --out reports/weekly/YYYY-MM-DD.html
+```
 
-Domestic Actions collection reads DART_API_KEY from GitHub Actions secrets. No paid AI API or server is used. The APR snapshot contains DART annuals for FY2021–FY2025 and separately tagged issuer preliminary Q1, Q2, and 1H 2026 values. The 2026 issuer release notes IFRS 18 restated FY2025 comparisons. Prices, portfolio cost basis, consensus, trading flows and other missing values are shown as unavailable, not inferred. Work cloud and scheduled execution require separate live verification.
+DART 키는 GitHub Actions secret으로만 씁니다. 유료 AI API나 상시 서버는 쓰지 않습니다. 시세와 컨센서스는 비공식 원천이라 막히면 해당 칸이 N/A로 나옵니다.
