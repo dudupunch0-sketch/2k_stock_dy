@@ -56,7 +56,8 @@ def fetch_quote(symbol: str, shares=None, currency=None):
             return {**empty,"note":f"시세 통화 {meta['currency']}가 재무 통화 {currency}와 달라 사용하지 않음"}
         tz=dt.timezone(dt.timedelta(seconds=int(meta.get("gmtoffset") or 0)))
         day=dt.datetime.fromtimestamp(int(stamp),tz).date().isoformat()
-        return {"price":price,"price_date":day,"market_cap":price*shares if shares else None,"symbol":symbol,"source_url":f"https://finance.yahoo.com/quote/{urllib.parse.quote(symbol)}","note":"Yahoo Finance 최근 종가(비공식 시세, 지연 가능) · 시가총액은 공시 주식수 기준 추정"}
+        return {"price":price,"price_date":day,"market_cap":price*shares if shares else None,"symbol":symbol,
+                "week52_high":meta.get("fiftyTwoWeekHigh"),"week52_low":meta.get("fiftyTwoWeekLow"),"source_url":f"https://finance.yahoo.com/quote/{urllib.parse.quote(symbol)}","note":"Yahoo Finance 최근 종가(비공식 시세, 지연 가능) · 시가총액은 공시 주식수 기준 추정"}
     except Exception as exc:
         return {**empty,"note":f"시세 조회 실패 ({type(exc).__name__})"}
 
@@ -180,13 +181,22 @@ def normalize_accounts(data):
                 cumulative=amount(statement,ids,labels,field="thstrm_add_amount")
                 ytd[key]=cumulative if cumulative is not None else (current if report.get("report")=="1Q" else None)
             standalone[key]=current if key not in ("operating_cash_flow","capex") or not is_interim else None
+        if is_interim:
+            # Prior-year comparatives from the same filing: same quarter and same YTD span.
+            report["prior_metrics"]={
+              "quarter":{k:amount(s,i,l,field="frmtrm_q_amount") for k,(s,i,l) in flows.items() if s=="CIS"},
+              "ytd":{k:amount(s,i,l,field="frmtrm_add_amount") for k,(s,i,l) in flows.items() if s=="CIS"}}
+            if report.get("report")=="1Q":
+                report["prior_metrics"]["ytd"]=dict(report["prior_metrics"]["quarter"])
         metrics.update({
+          "liabilities":amount("BS",("ifrs-full_Liabilities",),("부채총계",)),
+          "cash":amount("BS",("ifrs-full_CashAndCashEquivalents",),("현금및현금성자산",)),
           "assets":amount("BS",("ifrs-full_Assets",),("자산총계",)),
           "equity":amount("BS",("ifrs-full_Equity",),("자본총계",)),
           "equity_parent":amount("BS",("ifrs-full_EquityAttributableToOwnersOfParent",),("지배기업 소유주지분",)),
           "eps":amount("CIS",("ifrs-full_DilutedEarningsLossPerShare",),("보통주 희석주당손익",)),
           "weighted_shares":None})
-        instant={k:metrics.get(k) for k in ("assets","equity","equity_parent")}
+        instant={k:metrics.get(k) for k in ("assets","liabilities","cash","equity","equity_parent")}
         ytd.pop("eps",None)
         report["metrics"]=metrics
         report_receipts={row.get("rcept_no") for row in rows if row.get("rcept_no")}
@@ -300,36 +310,73 @@ def scenario_values(net_income, shares, assumptions):
     return result
 
 
+def earnings_base(reports):
+    """Valuation earnings: trailing twelve months when the next year's interim YTD and its
+    prior-year comparative exist; otherwise the latest annual figure."""
+    years=[r for r in reports if r["report"]=="annual"]
+    if not years: return {"net":None,"label":"연간 실적 없음","numerator":"미확인","kind":"none"}
+    annual=years[-1]; am=annual.get("metrics",{})
+    key="net_income_parent" if am.get("net_income_parent") is not None else "net_income"
+    numerator="지배기업 귀속 순이익" if key=="net_income_parent" else "연결 순이익 (지배기업 귀속 미확인)"
+    interims=[r for r in reports if r["report"]!="annual" and r["year"]==annual["year"]+1]
+    for r in sorted(interims,key=lambda r:r["report"],reverse=True):
+        ytd=(r.get("ytd_metrics") or {}).get(key); prior=((r.get("prior_metrics") or {}).get("ytd") or {}).get(key)
+        if ytd is not None and prior is not None and am.get(key) is not None:
+            return {"net":am[key]+ytd-prior,"kind":"ttm","numerator":numerator,
+                    "label":f"최근 12개월(TTM) = {annual['year']} 연간 + {r['year']} {r['report']} 누적 − {annual['year']} 같은 기간 누적"}
+    return {"net":am.get(key),"kind":"annual","numerator":numerator,"label":f"{annual['year']} 연간"}
+
+
+def latest_instant(reports):
+    for r in sorted(reports,key=lambda r:(r["year"],r["report"]!="annual",r["report"]),reverse=True):
+        m=r.get("metrics",{})
+        if m.get("equity_parent") is not None or m.get("equity") is not None: return r
+    return None
+
+
 def build_report(data, out: Path):
     validate_snapshot(data)
+    for r in data.get("reports",[]):
+        if r.get("items") and ("liabilities" not in r.get("metrics",{}) or (r.get("report")!="annual" and "prior_metrics" not in r)):
+            normalize_accounts({"reports":[r]})  # enrich snapshots saved before comparatives were extracted
     reports=sorted(data.get("reports",[]),key=lambda r:(r["year"],r["report"]))
     years=[r for r in reports if r["report"]=="annual"]
-    metrics=[r.get("metrics",{}) for r in years]
     latest=years[-1] if years else None
     analysis=data.get("analysis",{})
     assumptions=analysis.get("valuation",{}).get("scenarios",{})
-    net=(latest or {}).get("metrics",{}).get("net_income_parent")
-    if net is None: net=(latest or {}).get("metrics",{}).get("net_income")
+    base=earnings_base(reports); net=base["net"]
     shares=data["company"].get("shares_outstanding")
     currency=data["company"].get("currency","KRW")
     interim_rows=[r for r in reports if r.get("report")!="annual"]
     interims_html=interim_table(interim_rows,currency)
     vals=scenario_values(net,shares,assumptions)
-    limitations=analysis.get("limitations",["현재가와 기준일 시세 미확인","한경컨센서스 미수집","제품별 장기 단가, 원재료, 점유율, 기관 수급, Google Trends 및 동등 기준 경쟁사 데이터 미확인"])
+    limitations=analysis.get("limitations",["한경컨센서스 미수집","제품별 장기 단가, 원재료, 점유율, 기관 수급, Google Trends 및 동등 기준 경쟁사 데이터 미확인"])
     limitations_text=" · ".join(html.escape(x) for x in limitations)
-    numerator_basis="지배기업 귀속 순이익" if (latest or {}).get("metrics",{}).get("net_income_parent") is not None else "연결 순이익 (지배기업 귀속 미확인)"
-    scenario_basis_note=f"산식 분자: {numerator_basis} · 발행주식수: {shares if shares is not None else '미확인'} · 주식수 기준일: {data['company'].get('shares_as_of') or '미확인'}"
+    scenario_basis_note=f"기준 이익: {base['label']} {fmt(net,currency)} ({base['numerator']}) · 주식수 {shares:,}주 ({data['company'].get('shares_as_of') or '기준일 미확인'})" if shares else f"기준 이익: {base['label']} · 주식수 미확인"
     market=data.get("market",{}) or {}
     price=market.get("price"); cap=market.get("market_cap")
-    latest_m=(latest or {}).get("metrics",{})
-    equity_now=latest_m.get("equity_parent") if latest_m.get("equity_parent") is not None else latest_m.get("equity")
+    bs=latest_instant(reports); bm=(bs or {}).get("metrics",{})
+    equity_now=bm.get("equity_parent") if bm.get("equity_parent") is not None else bm.get("equity")
     per_now=cap/net if cap and net and net>0 else None
     pbr_now=cap/equity_now if cap and equity_now and equity_now>0 else None
-    price_detail=" · ".join(x for x in [
-        (f"시가총액(추정) {fmt(cap,currency)}" if cap else ""),
-        (f"PER {per_now:.1f}배" if per_now else ""),
-        (f"PBR {pbr_now:.1f}배" if pbr_now else ""),
-        (f"{(latest or {}).get('year')} 연간 실적 기준" if (per_now or pbr_now) else "")] if x)
+    hi,lo=market.get("week52_high"),market.get("week52_low")
+    range_text=f"52주 {fmt_price(lo,currency)} ~ {fmt_price(hi,currency)} · 범위 내 {(price-lo)/(hi-lo)*100:.0f}% 위치" if price and hi and lo and hi>lo else ""
+    valuation_card=(f'<strong>PER {per_now:.1f}배' if per_now else '<strong>PER N/A')+(f' · PBR {pbr_now:.1f}배' if pbr_now else '')+'</strong><small>'+html.escape(" · ".join(x for x in [
+        (f"시가총액(추정) {fmt(cap,currency)}" if cap else "종가 없음 · 시가총액 미산출"),
+        (f"이익: {base['label']}" if per_now else ""),
+        (f"자본: {bs['year']} {bs['report']} 말" if pbr_now else "")] if x))+'</small>'
+    q=next((r for r in reversed(interim_rows) if (r.get("prior_metrics") or {}).get("quarter")),None)
+    def yoy(cur,prev): return cur/prev-1 if cur is not None and prev not in (None,0) and prev>0 else None
+    if q:
+        qm=q.get("metrics",{}); qp=q["prior_metrics"]["quarter"]
+        g_rev,g_op=yoy(qm.get("revenue"),qp.get("revenue")),yoy(qm.get("operating_income"),qp.get("operating_income"))
+        growth_card=f'<label>최근 분기 성장 ({html.escape(str(q["year"])+" "+q["report"])}, 전년 같은 분기 대비)</label><strong>매출 {pct(g_rev)}</strong><small>영업이익 {pct(g_op)} · 분기 매출 {fmt(qm.get("revenue"),currency)}</small>'
+    else:
+        g=yoy((latest or {}).get("metrics",{}).get("revenue"),(years[-2] if len(years)>1 else {}).get("metrics",{}).get("revenue"))
+        growth_card=f'<label>최근 연간 매출 ({html.escape(str((latest or {}).get("year","—")))})</label><strong>{fmt((latest or {}).get("metrics",{}).get("revenue"),currency)}</strong><small>전년 대비 {pct(g)}</small>'
+    base_sc=assumptions.get("base") or next(iter(assumptions.values()),{"profit_growth":0.15,"pe":20})
+    implied=((price*shares/(net*base_sc["pe"]))**0.5-1) if price and shares and net and net>0 else None
+    implied_text=f"현재 종가는 PER {base_sc['pe']}배를 가정하면 앞으로 2년간 연 {implied*100:.0f}% 이익 성장을 반영한 가격이다." if implied is not None else ""
     def vs_price(v):
         return f" · 종가 대비 {v/price*100-100:+.0f}%" if price else ""
     summary_lines="".join(f"<li>{html.escape(x.strip())}</li>" for x in re.split(r"(?<=[。.!?])\s+",analysis.get("summary","분석 요약 확인 필요")) if x.strip())
@@ -337,9 +384,9 @@ def build_report(data, out: Path):
     out.parent.mkdir(parents=True,exist_ok=True)
     report_data={k:v for k,v in data.items() if k not in ("reports","analysis","journal")}
     report_data["reports"]=[{k:v for k,v in r.items() if k!="items"} for r in reports]
-    rendered={"data":report_data,"annual":[{k:v for k,v in r.items() if k!="items"} for r in years],"analysis":analysis,"valuation":vals}
+    rendered={"data":report_data,"annual":[{k:v for k,v in r.items() if k!="items"} for r in years],"analysis":analysis,"valuation":vals,"base":net,"base_label":base["label"]}
     payload=json.dumps(rendered,ensure_ascii=False,separators=(",",":" )).replace("</","<\\/")
-    page=f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(data['company']['name'])} 투자 분석</title><style>{CSS}</style></head><body><header><nav><span>두루미 주식</span><span>{html.escape(data['as_of'])} · {html.escape(data['company']['ticker'])}</span></nav><h1>{html.escape(data['company']['name'])}<small>{html.escape(data['company']['ticker'])} · 24개월 관점</small></h1><div class="lede"><b>3줄 요약</b><ol>{summary_lines}</ol></div></header><main><section class="cards"><article><label>기준일 주가</label><strong>{fmt_price(data.get('market',{}).get('price'),currency)}</strong><small>{html.escape(str(market.get('price_date') or '기준일 미확인'))} · {html.escape(market.get('note',''))}{('<br>'+html.escape(price_detail)) if price_detail else ''}</small></article><article><label>최근 연결 연간 매출</label><strong>{fmt((latest or {}).get('metrics',{}).get('revenue'),currency)}</strong><small>{html.escape(str((latest or {}).get('year','—')))} · {html.escape(currency)}</small></article><article><label>투자 판단</label><strong>사용자 결정</strong><small>자동 매매 지시 없음 · 보유 수량/원가 미제공</small></article></section><section><h2>핵심 판단</h2><div class="callout">{html.escape(analysis.get('thesis','근거 자료 기반 분석'))}</div><div class="columns">{cards(analysis.get('strengths',[]),'강점')}{cards(analysis.get('risks',[]),'핵심 위험')}</div></section><section><h2>재무 추세 <span>연결 기준 · {html.escape(currency)}</span></h2>{chart_svg(years,currency)}</section><section><h2>시나리오 가치 범위</h2><p class="muted">24개월 수익 성장률과 평가 PER를 바꾸면 아래 값이 재계산됩니다. {html.escape(f"비교 기준: {market.get('price_date')} 종가 {fmt_price(price,currency)} (비공식 시세)." if price else "기준일 종가가 없어 주가와 비교하지 않습니다.")}</p><div class="columns">{scenario_cards}</div><div class="controls"><label>이익 성장률 <input id="growth" type="range" min="-50" max="100" value="20"><output id="growthOut">20%</output></label><label>평가 PER <input id="pe" type="range" min="5" max="60" value="25"><output id="peOut">25배</output></label></div><div id="scenario" class="scenario"></div><small>계산: 최근 연결 지배기업 귀속 순이익(없으면 연결 순이익) × (1 + 연간 이익 성장 가정)<sup>2</sup> × 평가 PER ÷ 최근 확인 주식수.</small><p class="muted">{html.escape(scenario_basis_note)}</p></section><section><h2>상세 분석</h2>{detail_sections(analysis)}</section><section><h2>재무 데이터</h2>{financial_table(years,currency)}<h3>최신 중간 실적</h3>{interims_html}</section><section><h2>자료와 확인 한계</h2><ul>{''.join(f'<li><a href="{html.escape(safe_link(s["url"]),quote=True)}" target="_blank" rel="noopener">{html.escape(s["name"])}</a> · 확인 {html.escape(s.get("accessed","미확인"))} · {html.escape(s.get("note",""))}</li>' for s in data.get('sources',[]))}</ul><p class="muted">{limitations_text} · 시나리오는 AI 분석 입력의 가정이며 회사 가이던스나 컨센서스가 아닙니다.</p></section><section><h2>투자 일기</h2><p>사용자 메모 없음. 향후 journal/에 기록되는 사용자 의견과 AI 분석은 별도로 보존됩니다.</p></section></main><footer>생성기 {html.escape(data.get('collected_at',''))} · 이 문서는 조사 도구이며 개인화된 금융 조언이나 매매 권유가 아닙니다.</footer><script>const D={payload};{JS}</script></body></html>'''
+    page=f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(data['company']['name'])} 투자 분석</title><style>{CSS}</style></head><body><header><nav><span>두루미 주식</span><span>자료 {html.escape(data['as_of'])} · 분석 작성 {html.escape(str(analysis.get('as_of') or '날짜 미기록'))} · {html.escape(data['company']['ticker'])}</span></nav><h1>{html.escape(data['company']['name'])}<small>{html.escape(data['company']['ticker'])} · 24개월 관점</small></h1><div class="lede"><b>3줄 요약</b><ol>{summary_lines}</ol></div></header><main><section class="cards"><article><label>기준일 주가</label><strong>{fmt_price(data.get('market',{}).get('price'),currency)}</strong><small>{html.escape(str(market.get('price_date') or '기준일 미확인'))} · {html.escape(market.get('note',''))}{('<br>'+html.escape(range_text)) if range_text else ''}</small></article><article><label>밸류에이션</label>{valuation_card}</article><article>{growth_card}</article></section><section><h2>핵심 판단</h2><div class="callout">{html.escape(analysis.get('thesis','근거 자료 기반 분석'))}</div><div class="columns">{cards(analysis.get('strengths',[]),'강점')}{cards(analysis.get('risks',[]),'핵심 위험')}</div></section>{checkpoints_table(analysis.get('checkpoints',[]))}<section><h2>재무 추세 <span>연결 기준 · {html.escape(currency)}</span></h2>{chart_svg(years,currency)}</section><section><h2>시나리오 가치 범위</h2><p class="muted">기준 이익에 2년간 연 성장률을 적용하고 평가 PER를 곱한 24개월 뒤 주당 가치입니다. 막대를 움직이면 다시 계산됩니다. {html.escape(f"비교 기준: {market.get('price_date')} 종가 {fmt_price(price,currency)} (비공식 시세)." if price else "기준일 종가가 없어 주가와 비교하지 않습니다.")}</p>{('<div class="callout">'+html.escape(implied_text)+'</div>') if implied_text else ''}<div class="columns">{scenario_cards}</div><div class="controls"><label>이익 성장률 <input id="growth" type="range" min="-50" max="100" value="{round(base_sc['profit_growth']*100)}"><output id="growthOut">{round(base_sc['profit_growth']*100)}%</output></label><label>평가 PER <input id="pe" type="range" min="5" max="60" value="{base_sc['pe']}"><output id="peOut">{base_sc['pe']}배</output></label></div><div id="scenario" class="scenario"></div><small>계산: 기준 이익 × (1 + 연간 이익 성장 가정)<sup>2</sup> × 평가 PER ÷ 주식수.</small><p class="muted">{html.escape(scenario_basis_note)}</p></section><section><h2>상세 분석</h2>{detail_sections(analysis)}</section><section><h2>재무 데이터</h2>{financial_table(years,currency)}<h3>최신 중간 실적</h3>{interims_html}</section><section><h2>자료와 확인 한계</h2><ul>{''.join(f'<li><a href="{html.escape(safe_link(s["url"]),quote=True)}" target="_blank" rel="noopener">{html.escape(s["name"])}</a> · 확인 {html.escape(s.get("accessed","미확인"))} · {html.escape(s.get("note",""))}</li>' for s in data.get('sources',[]))}</ul><p class="muted">{limitations_text} · 시나리오는 AI 분석 입력의 가정이며 회사 가이던스나 컨센서스가 아닙니다.</p></section></main><footer>생성기 {html.escape(data.get('collected_at',''))} · 이 문서는 조사 도구이며 개인화된 금융 조언이나 매매 권유가 아닙니다.</footer><script>const D={payload};{JS}</script></body></html>'''
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() and out.name != "latest.html":
         if out.read_text(encoding="utf-8") != page:
@@ -356,6 +403,9 @@ def fmt(v,currency="KRW"):
     if currency=="KRW": return f"{v/1e8:,.1f}억원"
     return f"{currency} {v/1e6:,.1f}m" if abs(v)>=1e6 else f"{currency} {v:,.0f}"
 
+def pct(v):
+    return "N/A" if v is None else f"{v*100:+.1f}%"
+
 def fmt_price(v,currency="KRW"):
     if v is None: return "기준일 주가 미확인"
     if currency=="KRW": return f"₩{v:,.0f}/주"
@@ -364,13 +414,18 @@ def fmt_price(v,currency="KRW"):
 def cards(items,title):
     return '<article class="box"><h3>'+html.escape(title)+'</h3><ul>'+''.join('<li>'+html.escape(x['text'])+((' <a href="'+html.escape(safe_link(x['source']),quote=True)+'" target="_blank" rel="noopener">근거</a>') if x.get('source') else '')+'</li>' for x in items)+'</ul></article>'
 
+def checkpoints_table(items):
+    if not items: return ""
+    rows="".join("<tr><th>"+html.escape(x.get("item",""))+"</th><td>"+html.escape(x.get("current","미확인"))+"</td><td>"+html.escape(x.get("break_signal",""))+"</td><td>"+html.escape(x.get("next_check",""))+"</td><td>"+(f'<a href="{html.escape(safe_link(x.get("source")),quote=True)}" target="_blank" rel="noopener">근거</a>' if x.get("source") else "")+"</td></tr>" for x in items)
+    return '<section><h2>가설 점검표</h2><p class="muted">투자 가설이 유지되는지 보는 항목입니다. 오른쪽 신호가 나타나면 가설을 다시 검토합니다.</p><div class=scroll><table class="text"><thead><tr><th>항목</th><th>현재 상태</th><th>가설이 깨지는 신호</th><th>다음 확인 시점</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div></section>'
+
 def detail_sections(a):
     sections=a.get('sections',[])
     return ''.join('<details><summary>'+html.escape(s['title'])+'</summary><p>'+html.escape(s['body'])+'</p>'+''.join('<p><a href="'+html.escape(safe_link(src['url']),quote=True)+'" target="_blank" rel="noopener">'+html.escape(src['label'])+'</a></p>' for src in s.get('sources',[]))+'</details>' for s in sections)
 
 def financial_table(rows,currency="KRW"):
-    keys=[("revenue","매출"),("operating_income","영업이익"),("net_income","순이익"),("operating_cash_flow","영업현금흐름"),("capex","유형자산 취득"),("fcf","잉여현금흐름"),("eps","EPS"),("revenue_growth","매출 증가율"),("operating_growth","영업이익 증가율"),("operating_margin","영업이익률"),("net_margin","순이익률"),("roe","ROE"),("per","PER"),("pbr","PBR")]
-    out=[]; previous=None
+    keys=[("revenue","매출"),("operating_income","영업이익"),("net_income","순이익"),("operating_cash_flow","영업현금흐름"),("capex","유형자산 취득"),("fcf","잉여현금흐름"),("eps","EPS"),("revenue_growth","매출 증가율"),("operating_growth","영업이익 증가율"),("operating_margin","영업이익률"),("net_margin","순이익률"),("roe","ROE"),("debt","부채비율")]
+    out=[]; previous=None; split_flag=False
     for report in rows:
         m=report.get("metrics",{}); rev=m.get("revenue"); op=m.get("operating_income")
         prior=previous.get("metrics",{}) if previous else {}
@@ -391,21 +446,32 @@ def financial_table(rows,currency="KRW"):
                 if m.get("net_income") is not None and current_total is not None and previous_total is not None and current_total>0 and previous_total>0:
                     roe=m["net_income"]/((current_total+previous_total)/2); roe_basis="연결"
         roe_text="N/A" if roe is None else f"{roe*100:.1f}% ({roe_basis})"
-        values={"revenue":fmt(rev,currency),"operating_income":fmt(op,currency),"net_income":fmt(m.get("net_income"),currency),"operating_cash_flow":fmt(m.get("operating_cash_flow"),currency),"capex":fmt(abs(m["capex"]),currency) if m.get("capex") is not None else "N/A","fcf":fmt(fcf,currency),"eps":("N/A" if m.get("eps") is None else f"{currency} {m.get('eps'):,.2f}/share"),"revenue_growth":("N/A" if grow is None else f"{grow*100:.1f}%"),"operating_growth":("N/A" if opgrow is None else f"{opgrow*100:.1f}%"),"operating_margin":("N/A" if opm is None else f"{opm*100:.1f}%"),"net_margin":("N/A" if nim is None else f"{nim*100:.1f}%"),"roe":roe_text,"per":"N/A · 동일일 주가 미수집","pbr":"N/A · 동일일 주가 미수집"}
+        debt=safe_ratio(m.get("liabilities"),m.get("equity"))
+        eps_text="N/A" if m.get("eps") is None else f"{currency} {m.get('eps'):,.2f}/share"
+        ni,ni_prior,eps,eps_prior=m.get("net_income_parent") or m.get("net_income"),prior.get("net_income_parent") or prior.get("net_income"),m.get("eps"),prior.get("eps")
+        if adjacent and all(x not in (None,0) for x in (ni,ni_prior,eps,eps_prior)) and ni>0 and ni_prior>0 and eps>0 and eps_prior>0:
+            if max((eps/eps_prior)/(ni/ni_prior),(ni/ni_prior)/(eps/eps_prior))>1.8:
+                eps_text+=" *"; split_flag=True
+        values={"revenue":fmt(rev,currency),"operating_income":fmt(op,currency),"net_income":fmt(m.get("net_income"),currency),"operating_cash_flow":fmt(m.get("operating_cash_flow"),currency),"capex":fmt(abs(m["capex"]),currency) if m.get("capex") is not None else "N/A","fcf":fmt(fcf,currency),"eps":eps_text,"debt":("N/A" if debt is None else f"{debt*100:.0f}%"),"revenue_growth":("N/A" if grow is None else f"{grow*100:.1f}%"),"operating_growth":("N/A" if opgrow is None else f"{opgrow*100:.1f}%"),"operating_margin":("N/A" if opm is None else f"{opm*100:.1f}%"),"net_margin":("N/A" if nim is None else f"{nim*100:.1f}%"),"roe":roe_text}
         out.append("<tr><th>"+str(report["year"])+"</th>"+"".join("<td>"+html.escape(values[k])+"</td>" for k,_ in keys)+"</tr>")
         previous=report
     label={"KRW":"억원","USD":"USD million"}.get(currency,currency+" million")
-    return "<div class=scroll><table><thead><tr><th>연도</th>"+"".join(f"<th>{html.escape(n)} ({label})</th>" if k in ("revenue","operating_income","net_income","operating_cash_flow","capex","fcf") else f"<th>{html.escape(n)}</th>" for k,n in keys)+"</tr></thead><tbody>"+"".join(out)+"</tbody></table></div>"
+    return "<div class=scroll><table><thead><tr><th>연도</th>"+"".join(f"<th>{html.escape(n)} ({label})</th>" if k in ("revenue","operating_income","net_income","operating_cash_flow","capex","fcf") else f"<th>{html.escape(n)}</th>" for k,n in keys)+"</tr></thead><tbody>"+"".join(out)+"</tbody></table></div>"+('<p class="muted">* EPS 변화가 순이익 변화와 크게 다릅니다. 주식 분할·증자 등으로 주식 수가 바뀌었을 수 있어 연도 간 EPS를 직접 비교하지 마세요.</p>' if split_flag else '')
 
 def interim_table(rows,currency="KRW"):
     if not rows: return "<p class=muted>중간 실적 자료 없음</p>"
     out=[]
     for r in rows:
         m=r.get("metrics",{}); basis=r.get("period_basis","source basis not recorded")
-        label=("손익 분기 단독 · 현금흐름 누적 · BS 시점" if "income_quarter_standalone_cashflow_ytd" in basis else ("분기 단독" if "standalone" in basis else ("연초 누적" if "ytd" in basis.lower() or "YTD" in basis else basis)))
-        url=safe_link(r.get("source_url"))
-        out.append("<tr><th>"+html.escape(str(r.get("year"))+" "+str(r.get("report")))+"<small>"+html.escape(label)+" · "+html.escape(str(r.get("published") or "date unavailable"))+"</small></th>"+"".join("<td>"+fmt(m.get(k),currency)+"</td>" for k in ("revenue","operating_income","net_income","operating_cash_flow","capex","equity"))+f'<td><a href="{html.escape(url,quote=True)}" target="_blank" rel="noopener">원문 ↗</a></td></tr>')
-    return "<div class=scroll><table><thead><tr><th>기간 / 기준</th><th>매출</th><th>영업이익</th><th>순이익</th><th>영업현금흐름</th><th>CAPEX</th><th>자본</th><th>출처</th></tr></thead><tbody>"+"".join(out)+"</tbody></table></div>"
+        label=("분기 단독 손익 · 현금흐름은 연초 누적" if "income_quarter_standalone_cashflow_ytd" in basis else ("분기 단독" if "standalone" in basis else ("연초 누적" if "ytd" in basis.lower() or "YTD" in basis else basis)))
+        url=safe_link(r.get("source_url")); pq=(r.get("prior_metrics") or {}).get("quarter") or {}
+        def yoy(k):
+            cur,prev=m.get(k),pq.get(k)
+            return pct(cur/prev-1) if cur is not None and prev not in (None,0) and prev>0 else "N/A"
+        debt=safe_ratio(m.get("liabilities"),m.get("equity"))
+        cells=[fmt(m.get("revenue"),currency),yoy("revenue"),fmt(m.get("operating_income"),currency),yoy("operating_income"),fmt(m.get("net_income"),currency),fmt(m.get("operating_cash_flow"),currency),"N/A" if debt is None else f"{debt*100:.0f}%"]
+        out.append("<tr><th>"+html.escape(str(r.get("year"))+" "+str(r.get("report")))+"<small>"+html.escape(label)+" · 공시 "+html.escape(str(r.get("published") or "날짜 미확인"))+"</small></th>"+"".join("<td>"+html.escape(c)+"</td>" for c in cells)+f'<td><a href="{html.escape(url,quote=True)}" target="_blank" rel="noopener">원문 ↗</a></td></tr>')
+    return "<div class=scroll><table><thead><tr><th>기간 / 기준</th><th>매출</th><th>매출 YoY</th><th>영업이익</th><th>영업이익 YoY</th><th>순이익</th><th>영업현금흐름(누적)</th><th>부채비율</th><th>출처</th></tr></thead><tbody>"+"".join(out)+"</tbody></table></div><p class=\"muted\">YoY는 전년 같은 분기 대비(같은 공시의 비교 수치)입니다.</p>"
 
 def chart_svg(rows,currency="KRW"):
     series=[(r['year'],r.get('metrics',{}).get('revenue')) for r in rows if r.get('metrics',{}).get('revenue') is not None]
@@ -414,5 +480,5 @@ def chart_svg(rows,currency="KRW"):
     bars=''.join(f'<g><rect x="{40+i*120}" y="{h-25-v/m*170:.1f}" width="62" height="{v/m*170:.1f}" rx="8"/><text x="{71+i*120}" y="{h-6}" text-anchor="middle">{y}</text><text x="{71+i*120}" y="{h-32-v/m*170:.1f}" text-anchor="middle">{(v/1e11 if currency=="KRW" else v/1e9):.0f}{("천억" if currency=="KRW" else "B")}</text></g>' for i,(y,v) in enumerate(series[-5:]))
     return f'<svg class="chart" viewBox="0 0 {w} {h}" role="img" aria-label="연결 매출 추이">{bars}</svg>'
 
-CSS='''*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#17221f;font:16px/1.6 system-ui,-apple-system,sans-serif}header{padding:28px max(22px,calc((100vw - 1080px)/2));background:#173d35;color:white}nav{display:flex;justify-content:space-between;color:#bad2ca;font-size:.9rem}h1{font-size:clamp(2rem,6vw,4rem);letter-spacing:-.05em;margin:40px 0 20px}h1 small{display:block;font-size:1rem;letter-spacing:0;color:#c5ddd5;margin-top:8px}.lede{max-width:760px;background:#ffffff14;padding:16px 20px;border-radius:14px}.lede p{margin:4px 0 0}main{max-width:1080px;padding:28px 20px 70px;margin:auto}section{margin:22px 0 46px}h2{font-size:1.55rem;letter-spacing:-.03em}h2 span{color:#71827d;font-size:.85rem;font-weight:500}.cards,.columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.cards article,.box{background:white;padding:20px;border:1px solid #e3e9e5;border-radius:16px}.cards label,.cards small{display:block;color:#667671}.cards strong{display:block;font-size:1.3rem;margin:10px 0}.callout{background:#e2eee9;padding:20px;border-radius:14px}.box h3{margin-top:0}.box li{margin:10px 0}.chart{width:100%;max-height:260px;background:white;border-radius:16px;padding:10px}.chart rect{fill:#287760}.chart text{font-size:12px;fill:#50635e}.controls{display:flex;flex-wrap:wrap;gap:28px;padding:18px;background:#fff;border-radius:14px}.controls label{display:grid;gap:6px;min-width:230px}.scenario{margin:14px 0;display:flex;gap:12px;flex-wrap:wrap}.scenario div{background:#fff;border-radius:12px;padding:16px;min-width:150px}.scenario strong{display:block;font-size:1.2rem}details{padding:16px 0;border-bottom:1px solid #dce4df}summary{font-weight:650;cursor:pointer}.table-wrap{overflow:auto}.scroll{overflow:auto}.scenario-card{padding:18px;background:#fff;border:1px solid #e3e9e5;border-radius:14px}.scenario-card strong,.scenario-card small{display:block;margin-top:6px}table{border-collapse:collapse;width:100%;background:white}td,th{padding:12px;border-bottom:1px solid #e5e9e6;text-align:right;white-space:nowrap}th:first-child{text-align:left}.muted,small{color:#71817b}a{color:#236a55}footer{border-top:1px solid #dce4df;padding:24px;text-align:center;color:#71817b;font-size:.85rem}@media(max-width:600px){header{padding:22px}main{padding:18px 14px 50px}.cards{grid-template-columns:1fr}}'''
-JS='''const g=document.getElementById('growth'),p=document.getElementById('pe'),box=document.getElementById('scenario');function recalc(){document.getElementById('growthOut').value=g.value+'%';document.getElementById('peOut').value=p.value+'배';const annual=D.annual, latest=annual.length?(annual[annual.length-1].metrics.net_income_parent??annual[annual.length-1].metrics.net_income):null, shares=D.data.company.shares_outstanding; if(latest===null||shares===null||shares<=0){box.innerHTML='<div><strong>주당가치 산출 불가</strong>연결 순이익 또는 발행주식수 입력값 미확인</div>';return}const v=latest*Math.pow(1+Number(g.value)/100,2)*Number(p.value)/shares;const unit=D.data.company.currency==='KRW'?'원/주':D.data.company.currency+'/share';box.innerHTML='<div><label>사용자 조정 시나리오</label><strong>'+Math.round(v).toLocaleString()+' '+unit+'</strong><small>'+(D.data.market&&D.data.market.price?('종가 대비 '+(v/D.data.market.price*100-100>=0?'+':'')+Math.round(v/D.data.market.price*100-100)+'% · '+D.data.market.price_date+' 종가 기준'):'기준일 종가 없음 · 주가 비교 안 함')+'</small></div>'}g.addEventListener('input',recalc);p.addEventListener('input',recalc);recalc();'''
+CSS='''*{box-sizing:border-box}body{margin:0;background:#f5f6f2;color:#17221f;font:16px/1.6 system-ui,-apple-system,sans-serif}header{padding:28px max(22px,calc((100vw - 1080px)/2));background:#173d35;color:white}nav{display:flex;flex-wrap:wrap;gap:4px 16px;justify-content:space-between;color:#bad2ca;font-size:.9rem}h1{font-size:clamp(2rem,6vw,4rem);letter-spacing:-.05em;margin:40px 0 20px}h1 small{display:block;font-size:1rem;letter-spacing:0;color:#c5ddd5;margin-top:8px}.lede{max-width:760px;background:#ffffff14;padding:16px 20px;border-radius:14px}.lede p{margin:4px 0 0}main{max-width:1080px;padding:28px 20px 70px;margin:auto}section{margin:22px 0 46px}h2{font-size:1.55rem;letter-spacing:-.03em}h2 span{color:#71827d;font-size:.85rem;font-weight:500}.cards,.columns{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.cards article,.box{background:white;padding:20px;border:1px solid #e3e9e5;border-radius:16px}.cards label,.cards small{display:block;color:#667671}.cards strong{display:block;font-size:1.3rem;margin:10px 0}.callout{background:#e2eee9;padding:20px;border-radius:14px}.box h3{margin-top:0}.box li{margin:10px 0}.chart{width:100%;max-height:260px;background:white;border-radius:16px;padding:10px}.chart rect{fill:#287760}.chart text{font-size:12px;fill:#50635e}.controls{display:flex;flex-wrap:wrap;gap:28px;padding:18px;background:#fff;border-radius:14px}.controls label{display:grid;gap:6px;min-width:230px}.scenario{margin:14px 0;display:flex;gap:12px;flex-wrap:wrap}.scenario div{background:#fff;border-radius:12px;padding:16px;min-width:150px}.scenario strong{display:block;font-size:1.2rem}details{padding:16px 0;border-bottom:1px solid #dce4df}summary{font-weight:650;cursor:pointer}.table-wrap{overflow:auto}.scroll{overflow:auto}.scenario-card{padding:18px;background:#fff;border:1px solid #e3e9e5;border-radius:14px}.scenario-card strong,.scenario-card small{display:block;margin-top:6px}table{border-collapse:collapse;width:100%;background:white}td,th{padding:12px;border-bottom:1px solid #e5e9e6;text-align:right;white-space:nowrap}th:first-child{text-align:left}.muted,small{color:#71817b}a{color:#236a55}footer{border-top:1px solid #dce4df;padding:24px;text-align:center;color:#71817b;font-size:.85rem}.text td,.text th{white-space:normal;text-align:left;min-width:150px;vertical-align:top}@media(max-width:600px){header{padding:22px}main{padding:18px 14px 50px}.cards{grid-template-columns:1fr}}'''
+JS='''const g=document.getElementById('growth'),p=document.getElementById('pe'),box=document.getElementById('scenario');function recalc(){document.getElementById('growthOut').value=g.value+'%';document.getElementById('peOut').value=p.value+'배';const latest=D.base, shares=D.data.company.shares_outstanding, m=D.data.market||{}; if(latest===null||latest===undefined||!shares||shares<=0){box.innerHTML='<div><strong>주당가치 산출 불가</strong>기준 이익 또는 주식수 미확인</div>';return}const v=latest*Math.pow(1+Number(g.value)/100,2)*Number(p.value)/shares;const unit=D.data.company.currency==='KRW'?'원/주':D.data.company.currency+'/share';let note='기준일 종가 없음 · 주가 비교 안 함';if(m.price){const d=Math.round(v/m.price*100-100);note='종가 대비 '+(d>=0?'+':'')+d+'% · '+m.price_date+' 종가 기준';if(latest>0){const need=Math.pow(m.price*shares/(latest*Number(p.value)),0.5)-1;note+='<br>PER '+p.value+'배라면 현재가는 연 '+Math.round(need*100)+'% 이익 성장을 반영'}}box.innerHTML='<div><label>사용자 조정 시나리오</label><strong>'+Math.round(v).toLocaleString()+' '+unit+'</strong><small>'+note+'</small></div>'}g.addEventListener('input',recalc);p.addEventListener('input',recalc);recalc();'''

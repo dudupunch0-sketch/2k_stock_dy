@@ -80,6 +80,7 @@ def listing(path: Path = PATH):
 
 
 TEMPLATE = {
+    "as_of": "YYYY-MM-DD (분석 작성일)",
     "summary": "세 문장 이내 요약. 수치마다 기간·기준을 적는다.",
     "thesis": "24개월 투자 가설 한 문단과 이를 확인할 지표.",
     "strengths": [{"text": "출처가 있는 강점", "source": "https://..."}],
@@ -88,7 +89,9 @@ TEMPLATE = {
         "1. 기업·산업 개요와 수익 구조", "2. 재무제표·실적 전망", "3. 투자 포인트·위험과 주가 위치",
         "4. 산업 성장·시장 규모·관심도", "5. 경제적 해자", "6. 경쟁사 두 곳 비교",
         "7. 비용·영업 레버리지·잠재시장", "8. IR 핵심·최근 뉴스·리서치", "9. 24개월 가치평가·행동 검토")],
-    "valuation": {"method": "최근 연간 지배기업 귀속 순이익 × (1+성장률)^2 × PER ÷ 주식수. 모든 값은 AI 가정.",
+    "checkpoints": [{"item": "가설을 확인할 지표", "current": "지금 값과 출처 기간", "break_signal": "가설이 깨졌다고 볼 신호",
+                     "next_check": "다음 확인 시점(예: 3Q 실적 발표)", "source": "https://..."}],
+    "valuation": {"method": "최근 12개월(TTM) 지배주주 순이익(없으면 최근 연간) × (1+성장률)^2 × PER ÷ 주식수. 모든 값은 AI 가정.",
                   "scenarios": {"bear": {"profit_growth": -0.15, "pe": 10}, "base": {"profit_growth": 0.10, "pe": 15},
                                 "bull": {"profit_growth": 0.25, "pe": 20}}},
     "limitations": ["확인하지 못한 자료와 이유"],
