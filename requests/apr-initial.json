@@ -1,0 +1,14 @@
+{
+  "request_id": "apr-initial",
+  "ticker": "278470",
+  "market": "KRX",
+  "corp_code": "01190568",
+  "kind": "detailed",
+  "period_years": 5,
+  "requested_at": "2026-10-04",
+  "status": "fulfilled",
+  "result": "data/requests/apr-initial/snapshot.json",
+  "note": "First real APR source-backed analysis",
+  "evidence_packet": "data/history/278470/2026-10-04-apr-initial.json",
+  "completed_at": "2026-10-04T02:08:07.604240+00:00"
+}

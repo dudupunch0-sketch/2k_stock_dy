@@ -1,0 +1,1 @@
+{"schema_version":1,"limits":{"holdings":3,"watchlist":10},"holdings":[{"ticker":"278470","name":"에이피알","market":"KRX","corp_code":"01190568","currency":"KRW","notes":"보유 종목. 수량·원가 미제공."}],"watchlist":[],"validation_fixtures":[{"ticker":"AAPL","name":"Apple Inc.","market":"NASDAQ","cik":"0000320193","is_user_holding_or_watch":false}]}
