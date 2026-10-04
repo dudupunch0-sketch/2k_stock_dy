@@ -26,6 +26,23 @@ def dart_json(endpoint: str, params: dict, api_key: str):
         raise RuntimeError(f"OpenDART request failed for {endpoint} ({type(exc).__name__})") from None
 
 
+def resolve_corp_code(stock_code: str, api_key: str):
+    """Map a 6-digit KRX stock code to its OpenDART corp_code via corpCode.xml."""
+    import io, zipfile, xml.etree.ElementTree as ET
+    query = urllib.parse.urlencode({"crtfc_key": api_key})
+    try:
+        with urllib.request.urlopen(f"{DART}/corpCode.xml?{query}", timeout=60) as response:
+            body=response.read()
+        with zipfile.ZipFile(io.BytesIO(body)) as zf:
+            root=ET.fromstring(zf.read(zf.namelist()[0]))
+    except Exception as exc:
+        raise RuntimeError(f"OpenDART corp code lookup failed ({type(exc).__name__})") from None
+    for item in root.iter("list"):
+        if (item.findtext("stock_code") or "").strip()==stock_code:
+            return (item.findtext("corp_code") or "").strip(), (item.findtext("corp_name") or "").strip()
+    raise ValueError(f"No OpenDART corp_code for stock code {stock_code}")
+
+
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 

@@ -4,7 +4,7 @@ import json
 import os
 import re
 from pathlib import Path
-from .core import ROOT, collect_apr, collect_sec, validate_snapshot
+from .core import ROOT, collect_apr, collect_sec, resolve_corp_code, validate_snapshot
 
 def save(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -44,7 +44,11 @@ def main():
                     raise ValueError("Existing snapshot ticker does not match request")
             elif market=="KRX":
                 if not key: raise RuntimeError("DART_API_KEY unavailable for Korean filing collection")
-                corp=str(company.get("corp_code",""))
+                corp=str(company.get("corp_code") or "")
+                if not corp and re.fullmatch(r"\d{6}",ticker):
+                    corp,dart_name=resolve_corp_code(ticker,key)
+                    req["corp_code"]=corp
+                    if not company.get("name") or company.get("name")==ticker: company["name"]=dart_name
                 if not re.fullmatch(r"\d{8}",corp): raise ValueError("Invalid configured corp_code")
                 analysis_name=company.get("analysis_file")
                 analysis=(ROOT/"analysis"/analysis_name).resolve() if analysis_name else None
