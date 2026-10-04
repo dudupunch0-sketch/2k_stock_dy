@@ -62,6 +62,61 @@ def fetch_quote(symbol: str, shares=None, currency=None):
         return {**empty,"note":f"시세 조회 실패 ({type(exc).__name__})"}
 
 
+NAVER="https://m.stock.naver.com/api/stock"
+
+
+def _num(text, scale=1):
+    s=str(text or "").replace(",","").replace("+","").strip()
+    if not re.fullmatch(r"-?\d+(?:\.\d+)?",s): return None
+    v=float(s)*scale
+    return int(v) if v.is_integer() else v
+
+
+def naver_consensus(code: str):
+    """Next-year FnGuide consensus row shown by Naver; amounts are 억원 → 원."""
+    fin=fetch_json(f"{NAVER}/{code}/finance/annual",headers={"User-Agent":"Mozilla/5.0"})["financeInfo"]
+    cols=[t for t in fin.get("trTitleList",[]) if t.get("isConsensus")=="Y"]
+    if not cols: return None
+    key=cols[0]["key"]; rows={r["title"]:r.get("columns",{}) for r in fin.get("rowList",[])}
+    get=lambda title,scale=1:_num((rows.get(title,{}).get(key) or {}).get("value"),scale)
+    actual=[t["key"] for t in fin.get("trTitleList",[]) if t.get("isConsensus")=="N"]
+    prev=actual[-1] if actual else None
+    prev_get=lambda title,scale=1:_num((rows.get(title,{}).get(prev) or {}).get("value"),scale) if prev else None
+    net=get("지배주주순이익",1e8)
+    return {"fiscal":cols[0]["title"].rstrip("."),"year":int(key[:4]),"revenue":get("매출액",1e8),"operating_income":get("영업이익",1e8),
+            "net_income_parent":net,"net_income":get("당기순이익",1e8),"eps":get("EPS"),"per_at_naver":get("PER"),
+            "prior_year":int(prev[:4]) if prev else None,"prior_eps":prev_get("EPS"),"prior_revenue":prev_get("매출액",1e8),"prior_operating_income":prev_get("영업이익",1e8)}
+
+
+def fetch_naver(code: str):
+    """KRX market context from Naver Finance (unofficial): consensus, target price,
+    investor flows, peers and recent broker reports. Never raises."""
+    out={"source_url":f"https://m.stock.naver.com/domestic/stock/{code}/total","accessed":dt.datetime.now(dt.timezone.utc).isoformat(),
+         "note":"네이버증권(비공식). 컨센서스는 FnGuide 집계.","consensus":None,"target":None,"flows":[],"peers":[],"research":[],"errors":[]}
+    if not re.fullmatch(r"\d{6}",str(code or "")): out["errors"].append("국내 6자리 종목만 지원"); return out
+    try: out["consensus"]=naver_consensus(code)
+    except Exception as exc: out["errors"].append(f"컨센서스 조회 실패 ({type(exc).__name__})")
+    try:
+        d=fetch_json(f"{NAVER}/{code}/integration",headers={"User-Agent":"Mozilla/5.0"})
+        c=d.get("consensusInfo") or {}
+        if c.get("priceTargetMean"):
+            out["target"]={"price_target_mean":_num(c["priceTargetMean"]),"recomm_mean":_num(c.get("recommMean")),"date":c.get("createDate")}
+        out["flows"]=[{"date":f"{x['bizdate'][:4]}-{x['bizdate'][4:6]}-{x['bizdate'][6:]}","foreign":_num(x.get("foreignerPureBuyQuant")),"institution":_num(x.get("organPureBuyQuant")),
+                       "individual":_num(x.get("individualPureBuyQuant")),"foreign_hold_ratio":x.get("foreignerHoldRatio"),"close":_num(x.get("closePrice"))} for x in d.get("dealTrendInfos") or [] if x.get("bizdate")]
+        out["research"]=[{"broker":x.get("bnm"),"title":x.get("tit"),"date":f"{x['wdt'][:4]}-{x['wdt'][4:6]}-{x['wdt'][6:]}","url":f"https://stock.naver.com/research/company/{x['id']}"} for x in d.get("researches") or [] if x.get("wdt") and x.get("id")]
+        for p in (d.get("industryCompareInfo") or [])[:6]:
+            if p.get("itemCode")==code: continue
+            peer={"ticker":p.get("itemCode"),"name":p.get("stockName"),"close":_num(p.get("closePrice")),"market_cap":_num(p.get("marketValue"),1e6),"change_pct":_num(p.get("fluctuationsRatio")),"forward_per":None,"forward_year":None}
+            try:
+                pc=naver_consensus(peer["ticker"])
+                if pc and pc.get("eps") and pc["eps"]>0 and peer["close"]:
+                    peer["forward_per"]=peer["close"]/pc["eps"]; peer["forward_year"]=pc["year"]
+            except Exception: pass
+            out["peers"].append(peer)
+    except Exception as exc: out["errors"].append(f"시장 정보 조회 실패 ({type(exc).__name__})")
+    return out
+
+
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -131,7 +186,10 @@ def collect_apr(api_key: str, out: Path, *, corp="01190568", stock="278470", com
     market=fetch_quote(stock+suffix if suffix else "",common_shares,"KRW")
     if market.get("source_url"):
         sources.append({"name":"Yahoo Finance 시세","url":market["source_url"],"accessed":dt.datetime.now(dt.timezone.utc).isoformat(),"disclosure_date":market["price_date"],"note":"최근 종가. 비공식 시세이며 지연될 수 있음."})
-    data={"schema_version":1,"kind":"detailed","company":{"name":info.get("corp_name",company_name),"ticker":stock,"corp_code":corp,"market":"KRX","currency":"KRW","shares_outstanding":common_shares,"shares_as_of":f"{now.year-1}-12-31" if common_shares else None,"fiscal_year_end":"12-31"},"as_of":TODAY,"collected_at":dt.datetime.now(dt.timezone.utc).isoformat(),"source_status":"success","reports":reports,"sources":sources,"share_count_source":{"name":"OpenDART stockTotqySttus","as_of":f"{now.year-1}-12-31","value":common_shares},"market":market,"analysis":load_json(analysis_path) if analysis_path and Path(analysis_path).is_file() else (load_json(ROOT/"analysis/apr.json") if stock=="278470" else {}),"journal":[]}
+    naver=fetch_naver(stock)
+    if naver.get("consensus") or naver.get("target") or naver.get("flows"):
+        sources.append({"name":"네이버증권 (FnGuide 컨센서스·수급·업종 비교)","url":naver["source_url"],"accessed":naver["accessed"],"disclosure_date":(naver.get("target") or {}).get("date"),"note":"비공식 경로. 증권사 추정치 집계이며 확정 실적이 아님."})
+    data={"schema_version":1,"kind":"detailed","company":{"name":info.get("corp_name",company_name),"ticker":stock,"corp_code":corp,"market":"KRX","currency":"KRW","shares_outstanding":common_shares,"shares_as_of":f"{now.year-1}-12-31" if common_shares else None,"fiscal_year_end":"12-31"},"as_of":TODAY,"collected_at":dt.datetime.now(dt.timezone.utc).isoformat(),"source_status":"success","reports":reports,"sources":sources,"share_count_source":{"name":"OpenDART stockTotqySttus","as_of":f"{now.year-1}-12-31","value":common_shares},"market":market,"naver":naver,"analysis":load_json(analysis_path) if analysis_path and Path(analysis_path).is_file() else (load_json(ROOT/"analysis/apr.json") if stock=="278470" else {}),"journal":[]}
     for item in data["reports"]:
         if item.get("items"): normalize_accounts({"reports":[item]})
     data["reports"].sort(key=lambda r:(r["year"],r["report"]))
@@ -339,6 +397,40 @@ def earnings_base(reports):
 FORWARD_BASIS={"consensus":"컨센서스","analyst":"개별 증권사 추정","guidance":"회사 가이던스 기반 추정","ai":"AI 추정"}
 
 
+def consensus_forward(naver, price):
+    c=(naver or {}).get("consensus") or {}
+    if not price or not c.get("eps") or c["eps"]<=0: return None
+    return {"per":price/c["eps"],"text":f"Forward PER {price/c['eps']:.1f}배 ({c['year']}E 컨센서스 EPS {c['eps']:,.0f}원, FnGuide)","note":"","source":naver.get("source_url")}
+
+
+def market_view(naver, price, currency):
+    """Consensus, target price, investor flows, peers and broker reports."""
+    if not naver or not (naver.get("consensus") or naver.get("target") or naver.get("flows") or naver.get("peers")): return ""
+    parts=[]; c=naver.get("consensus"); t=naver.get("target")
+    def chg(cur,prev): return pct(cur/prev-1) if cur is not None and prev not in (None,0) and prev>0 else "N/A"
+    if c:
+        rows=[("매출",c.get("prior_revenue"),c.get("revenue"),True),("영업이익",c.get("prior_operating_income"),c.get("operating_income"),True),("EPS",c.get("prior_eps"),c.get("eps"),False)]
+        body="".join(f"<tr><th>{n}</th><td>{fmt(p,currency) if money else ('N/A' if p is None else format(p,',.0f'))}</td><td>{fmt(v,currency) if money else ('N/A' if v is None else format(v,',.0f'))}</td><td>{chg(v,p)}</td></tr>" for n,p,v,money in rows)
+        parts.append(f'<h3>{c["year"]}년 컨센서스 (증권사 추정 평균)</h3><div class=scroll><table><thead><tr><th>항목</th><th>{c.get("prior_year") or "전년"} 실적</th><th>{c["year"]}E</th><th>증감</th></tr></thead><tbody>{body}</tbody></table></div>')
+    if t and t.get("price_target_mean"):
+        gap=f" · 종가 대비 {t['price_target_mean']/price*100-100:+.0f}%" if price else ""
+        parts.append(f'<p><b>증권사 평균 목표주가 {fmt_price(t["price_target_mean"],currency)}</b>{gap} · 평균 투자의견 {t.get("recomm_mean") or "N/A"} (5=적극 매수, 3=중립) · {html.escape(str(t.get("date") or ""))} 기준</p>')
+    flows=naver.get("flows") or []
+    if flows:
+        tot=lambda k: sum(x.get(k) or 0 for x in flows)
+        body="".join(f"<tr><th>{html.escape(x['date'])}</th><td>{(x.get('foreign') or 0):+,}</td><td>{(x.get('institution') or 0):+,}</td><td>{(x.get('individual') or 0):+,}</td><td>{html.escape(str(x.get('foreign_hold_ratio') or ''))}</td></tr>" for x in flows)
+        parts.append(f'<h3>최근 {len(flows)}거래일 수급 (순매수 주식 수)</h3><p class="muted">합계: 외국인 {tot("foreign"):+,}주 · 기관 {tot("institution"):+,}주 · 개인 {tot("individual"):+,}주</p><div class=scroll><table><thead><tr><th>날짜</th><th>외국인</th><th>기관</th><th>개인</th><th>외국인 보유율</th></tr></thead><tbody>{body}</tbody></table></div>')
+    peers=naver.get("peers") or []
+    if peers:
+        body="".join(f"<tr><th>{html.escape(str(p.get('name')))}<small>{html.escape(str(p.get('ticker')))}</small></th><td>{fmt(p.get('market_cap'),currency)}</td><td>{fmt_price(p.get('close'),currency)}</td><td>{'N/A' if p.get('forward_per') is None else format(p['forward_per'],'.1f')+'배 ('+str(p.get('forward_year'))+'E)'}</td></tr>" for p in peers)
+        parts.append(f'<h3>같은 업종 비교 (네이버 업종 분류)</h3><div class=scroll><table><thead><tr><th>종목</th><th>시가총액</th><th>종가</th><th>Forward PER</th></tr></thead><tbody>{body}</tbody></table></div><p class="muted">업종 분류는 네이버 기준이라 사업 구조가 다른 회사가 섞일 수 있습니다.</p>')
+    research=naver.get("research") or []
+    if research:
+        parts.append('<h3>최근 증권사 리포트</h3><ul>'+"".join(f'<li>{html.escape(x["date"])} · {html.escape(str(x.get("broker")))} · <a href="{html.escape(safe_link(x["url"]),quote=True)}" target="_blank" rel="noopener">{html.escape(str(x.get("title")))}</a></li>' for x in research)+'</ul>')
+    note=html.escape(naver.get("note",""))+(" · "+html.escape(" · ".join(naver.get("errors") or [])) if naver.get("errors") else "")
+    return f'<section><h2>시장 평가 <span>증권사·수급·동종 업종</span></h2>{"".join(parts)}<p class="muted">{note} · <a href="{html.escape(safe_link(naver.get("source_url")),quote=True)}" target="_blank" rel="noopener">네이버증권</a> · 확인 {html.escape(str(naver.get("accessed",""))[:10])}</p></section>'
+
+
 def forward_valuation(analysis, cap, price, currency):
     """Forward PER only from an explicitly sourced estimate in the analysis input."""
     f=(analysis.get("valuation") or {}).get("forward") or {}
@@ -389,8 +481,13 @@ def build_report(data, out: Path):
         (f"이익: {base['label']}" if per_now else ""),
         (f"자본: {bs['year']} {bs['report']} 말" if pbr_now else ""),
         (f"EPS {base['eps']:,.0f} ({'TTM' if base['kind']=='ttm' else '연간'})" if base.get("eps") is not None else "")] if x))
-    fwd=forward_valuation(analysis,cap,price,currency)
-    valuation_card+=('<br><b>'+html.escape(fwd["text"])+'</b>'+(' '+html.escape(fwd["note"]) if fwd["note"] else '')+(f' <a href="{html.escape(safe_link(fwd["source"]),quote=True)}" target="_blank" rel="noopener">근거</a>' if fwd.get("source") else '')) if fwd else '<br>Forward PER: 출처 있는 이익 추정 없음'
+    naver=data.get("naver") or {}
+    forwards=[x for x in (consensus_forward(naver,price),forward_valuation(analysis,cap,price,currency)) if x]
+    if len(forwards)==2 and "컨센서스" in forwards[1]["text"]: forwards=forwards[:1]
+    def fwd_html(f): return "<br><b>"+html.escape(f["text"])+"</b>"+(" "+html.escape(f["note"]) if f["note"] else "")+(f' <a href="{html.escape(safe_link(f["source"]),quote=True)}" target="_blank" rel="noopener">근거</a>' if f.get("source") else "")
+    valuation_card+="".join(fwd_html(f) for f in forwards) if forwards else "<br>Forward PER: 출처 있는 이익 추정 없음"
+    target=naver.get("target") or {}
+    target_text=f"증권사 평균 목표가 {fmt_price(target['price_target_mean'],currency)}"+(f" (종가 대비 {target['price_target_mean']/price*100-100:+.0f}%)" if price else "") if target.get("price_target_mean") else ""
     valuation_card+='</small>'
     q=next((r for r in reversed(interim_rows) if (r.get("prior_metrics") or {}).get("quarter")),None)
     def yoy(cur,prev): return cur/prev-1 if cur is not None and prev not in (None,0) and prev>0 else None
@@ -413,7 +510,7 @@ def build_report(data, out: Path):
     report_data["reports"]=[{k:v for k,v in r.items() if k!="items"} for r in reports]
     rendered={"data":report_data,"annual":[{k:v for k,v in r.items() if k!="items"} for r in years],"analysis":analysis,"valuation":vals,"base":net,"base_label":base["label"]}
     payload=json.dumps(rendered,ensure_ascii=False,separators=(",",":" )).replace("</","<\\/")
-    page=f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(data['company']['name'])} 투자 분석</title><style>{CSS}</style></head><body><header><nav><span>두루미 주식</span><span>자료 {html.escape(data['as_of'])} · 분석 작성 {html.escape(str(analysis.get('as_of') or '날짜 미기록'))} · {html.escape(data['company']['ticker'])}</span></nav><h1>{html.escape(data['company']['name'])}<small>{html.escape(data['company']['ticker'])} · 24개월 관점</small></h1><div class="lede"><b>3줄 요약</b><ol>{summary_lines}</ol></div></header><main><section class="cards"><article><label>기준일 주가</label><strong>{fmt_price(data.get('market',{}).get('price'),currency)}</strong><small>{html.escape(str(market.get('price_date') or '기준일 미확인'))} · {html.escape(market.get('note',''))}{('<br>'+html.escape(range_text)) if range_text else ''}</small></article><article><label>밸류에이션</label>{valuation_card}</article><article>{growth_card}</article></section><section><h2>핵심 판단</h2><div class="callout">{html.escape(analysis.get('thesis','근거 자료 기반 분석'))}</div><div class="columns">{cards(analysis.get('strengths',[]),'강점')}{cards(analysis.get('risks',[]),'핵심 위험')}</div></section>{checkpoints_table(analysis.get('checkpoints',[]))}<section><h2>재무 추세 <span>연결 기준 · {html.escape(currency)}</span></h2>{chart_svg(years,currency)}</section><section><h2>시나리오 가치 범위</h2><p class="muted">기준 이익에 2년간 연 성장률을 적용하고 평가 PER를 곱한 24개월 뒤 주당 가치입니다. 막대를 움직이면 다시 계산됩니다. {html.escape(f"비교 기준: {market.get('price_date')} 종가 {fmt_price(price,currency)} (비공식 시세)." if price else "기준일 종가가 없어 주가와 비교하지 않습니다.")}</p>{('<div class="callout">'+html.escape(implied_text)+'</div>') if implied_text else ''}<div class="columns">{scenario_cards}</div><div class="controls"><label>이익 성장률 <input id="growth" type="range" min="-50" max="100" value="{round(base_sc['profit_growth']*100)}"><output id="growthOut">{round(base_sc['profit_growth']*100)}%</output></label><label>평가 PER <input id="pe" type="range" min="5" max="60" value="{base_sc['pe']}"><output id="peOut">{base_sc['pe']}배</output></label></div><div id="scenario" class="scenario"></div><small>계산: 기준 이익 × (1 + 연간 이익 성장 가정)<sup>2</sup> × 평가 PER ÷ 주식수.</small><p class="muted">{html.escape(scenario_basis_note)}</p></section><section><h2>상세 분석</h2>{detail_sections(analysis)}</section><section><h2>재무 데이터</h2>{financial_table(years,currency)}<h3>최신 중간 실적</h3>{interims_html}</section><section><h2>자료와 확인 한계</h2><ul>{''.join(f'<li><a href="{html.escape(safe_link(s["url"]),quote=True)}" target="_blank" rel="noopener">{html.escape(s["name"])}</a> · 확인 {html.escape(s.get("accessed","미확인"))} · {html.escape(s.get("note",""))}</li>' for s in data.get('sources',[]))}</ul><p class="muted">{limitations_text} · 시나리오는 AI 분석 입력의 가정이며 회사 가이던스나 컨센서스가 아닙니다.</p></section></main><footer>생성기 {html.escape(data.get('collected_at',''))} · 이 문서는 조사 도구이며 개인화된 금융 조언이나 매매 권유가 아닙니다.</footer><script>const D={payload};{JS}</script></body></html>'''
+    page=f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{html.escape(data['company']['name'])} 투자 분석</title><style>{CSS}</style></head><body><header><nav><span>두루미 주식</span><span>자료 {html.escape(data['as_of'])} · 분석 작성 {html.escape(str(analysis.get('as_of') or '날짜 미기록'))} · {html.escape(data['company']['ticker'])}</span></nav><h1>{html.escape(data['company']['name'])}<small>{html.escape(data['company']['ticker'])} · 24개월 관점</small></h1><div class="lede"><b>3줄 요약</b><ol>{summary_lines}</ol></div></header><main><section class="cards"><article><label>기준일 주가</label><strong>{fmt_price(data.get('market',{}).get('price'),currency)}</strong><small>{html.escape(str(market.get('price_date') or '기준일 미확인'))} · {html.escape(market.get('note',''))}{('<br>'+html.escape(range_text)) if range_text else ''}{('<br>'+html.escape(target_text)) if target_text else ''}</small></article><article><label>밸류에이션</label>{valuation_card}</article><article>{growth_card}</article></section><section><h2>핵심 판단</h2><div class="callout">{html.escape(analysis.get('thesis','근거 자료 기반 분석'))}</div><div class="columns">{cards(analysis.get('strengths',[]),'강점')}{cards(analysis.get('risks',[]),'핵심 위험')}</div></section>{checkpoints_table(analysis.get('checkpoints',[]))}{market_view(naver,price,currency)}<section><h2>재무 추세 <span>연결 기준 · {html.escape(currency)}</span></h2>{chart_svg(years,currency)}</section><section><h2>시나리오 가치 범위</h2><p class="muted">기준 이익에 2년간 연 성장률을 적용하고 평가 PER를 곱한 24개월 뒤 주당 가치입니다. 막대를 움직이면 다시 계산됩니다. {html.escape(f"비교 기준: {market.get('price_date')} 종가 {fmt_price(price,currency)} (비공식 시세)." if price else "기준일 종가가 없어 주가와 비교하지 않습니다.")}</p>{('<div class="callout">'+html.escape(implied_text)+'</div>') if implied_text else ''}<div class="columns">{scenario_cards}</div><div class="controls"><label>이익 성장률 <input id="growth" type="range" min="-50" max="100" value="{round(base_sc['profit_growth']*100)}"><output id="growthOut">{round(base_sc['profit_growth']*100)}%</output></label><label>평가 PER <input id="pe" type="range" min="5" max="60" value="{base_sc['pe']}"><output id="peOut">{base_sc['pe']}배</output></label></div><div id="scenario" class="scenario"></div><small>계산: 기준 이익 × (1 + 연간 이익 성장 가정)<sup>2</sup> × 평가 PER ÷ 주식수.</small><p class="muted">{html.escape(scenario_basis_note)}</p></section><section><h2>상세 분석</h2>{detail_sections(analysis)}</section><section><h2>재무 데이터</h2>{financial_table(years,currency)}<h3>최신 중간 실적</h3>{interims_html}</section><section><h2>자료와 확인 한계</h2><ul>{''.join(f'<li><a href="{html.escape(safe_link(s["url"]),quote=True)}" target="_blank" rel="noopener">{html.escape(s["name"])}</a> · 확인 {html.escape(s.get("accessed","미확인"))} · {html.escape(s.get("note",""))}</li>' for s in data.get('sources',[]))}</ul><p class="muted">{limitations_text} · 시나리오는 AI 분석 입력의 가정이며 회사 가이던스나 컨센서스가 아닙니다.</p></section></main><footer>생성기 {html.escape(data.get('collected_at',''))} · 이 문서는 조사 도구이며 개인화된 금융 조언이나 매매 권유가 아닙니다.</footer><script>const D={payload};{JS}</script></body></html>'''
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists() and out.name != "latest.html":
         if out.read_text(encoding="utf-8") != page:
