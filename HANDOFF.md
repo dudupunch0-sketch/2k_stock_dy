@@ -85,7 +85,9 @@
 >
 > **투자자 관점 보고서 개선 (2026-10-04, PR 대기)**: APR 보고서를 평가한 결과 밸류에이션이 2025 연간 이익 기준이라 고성장 기업을 과도하게 고평가로 보이게 함(기준 시나리오 종가 대비 -30%, PER 47배). TTM 기준(2025 연간 + 2026 1H − 2025 1H, 같은 공시의 비교값)으로 바꾸자 PER 약 32배, 기준 시나리오 +4%. 변경: TTM 기준 이익, 분기 YoY(frmtrm_q_amount), 부채비율, 52주 범위, 현재가 내재 성장률, 가설 점검표(`checkpoints`), 분석 작성일 표시, EPS 분할 의심 표시, `report --refresh-price`. 제거: 항상 N/A인 연도별 PER/PBR 열, "투자 판단: 사용자 결정" 카드, 미구현 투자 일기 섹션. `analysis/apr.json`의 낡은 문장(주가 미확인, 2Q 잠정, 영어 8번)을 고치고 점검표 6개 추가. 새 보고서 `reports/apr/2026-10-04-v2.html`·`latest.html`. 남은 한계: IFRS 18 재작성으로 TTM에 약간의 기준 차이 가능. (PR #4·#5 사용자 병합: 분기 EPS YoY, TTM EPS, 출처 있는 Forward PER.)
 >
-> **네이버증권 연동 (2026-10-04, PR 대기)**: 사용자 결정으로 증권사 API 대신 네이버증권 비공식 API(`m.stock.naver.com/api/stock/<code>/finance/annual`, `/integration`) 사용. 토스증권 Open API는 주문 중심·컨센서스 미확인이라 제외. 수집 시 `naver` 블록(FnGuide 컨센서스, 평균 목표가·투자의견, 5일 수급, 업종 6종목 Forward PER, 최근 리포트) 저장, 실패 시 errors에 기록. 보고서 "시장 평가" 섹션, Forward PER은 컨센서스 우선. `report --refresh-market`, `market <ticker>` CLI, 주간 지시문에 컨센서스·목표가·수급 변화 비교 추가. APR: Forward PER 23.2배(컨센서스), 목표가 +47%. 미국 종목 컨센서스는 미지원.
+> **네이버증권 연동 (2026-10-04, PR 대기)**: 사용자 결정으로 증권사 API 대신 네이버증권 비공식 API(`m.stock.naver.com/api/stock/<code>/finance/annual`, `/integration`) 사용. 토스증권 Open API는 주문 중심·컨센서스 미확인이라 제외. 수집 시 `naver` 블록(FnGuide 컨센서스, 평균 목표가·투자의견, 5일 수급, 업종 6종목 Forward PER, 최근 리포트) 저장, 실패 시 errors에 기록. 보고서 "시장 평가" 섹션, Forward PER은 컨센서스 우선. `report --refresh-market`, `market <ticker>` CLI, 주간 지시문에 컨센서스·목표가·수급 변화 비교 추가. APR: Forward PER 23.2배(컨센서스), 목표가 +47%. 미국 종목 컨센서스는 미지원. (PR #6 사용자 병합)
+>
+> **자동 테스트 (2026-10-04, PR 대기)**: 사용자 요청으로 `tests/`에 unittest 49개 추가(재무 정규화·TTM, 보고서 내용 규칙·escape·날짜 보고서 불변, 시세·네이버·DART 어댑터(가짜 응답, 키 비노출), corp_code 조회, 요청 처리, universe, 주간 보고, delta, 커밋된 모든 스냅샷 렌더, node 스크립트 문법). `urllib.request.urlopen`을 막아 네트워크 없이 실행. 일부러 버그 3개를 넣어 실패하는 것 확인. `.github/workflows/tests.yml`로 PR·main push마다 실행.
 >
 > 다음: 10/9 첫 주간 실행 결과 확인(`reports/weekly/`, Actions·커밋), 2026 1Q 보존, `analysis/apr.json`의 2Q "잠정" 문구 갱신, 시세·컨센서스 등 미수집 항목.
 
