@@ -1,0 +1,513 @@
+{
+  "schema_version": 1,
+  "kind": "us_public_company",
+  "company": {
+    "name": "Apple Inc.",
+    "ticker": "AAPL",
+    "cik": "0000320193",
+    "market": "US",
+    "currency": "USD",
+    "shares_outstanding": 14776353000,
+    "shares_as_of": "2025-10-17"
+  },
+  "as_of": "2026-10-04",
+  "collected_at": "2026-10-04T07:49:12.141097+00:00",
+  "source_status": "success",
+  "reports": [
+    {
+      "year": 2021,
+      "report": "annual",
+      "period_basis": "annual",
+      "metrics": {
+        "revenue": 365817000000,
+        "operating_income": 108949000000,
+        "net_income": 94680000000,
+        "assets": 351002000000,
+        "equity": 63090000000,
+        "operating_cash_flow": 104038000000,
+        "capex": 11085000000,
+        "eps": 5.61
+      },
+      "metric_sources": {
+        "revenue": {
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "operating_income": {
+          "concept": "OperatingIncomeLoss",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "net_income": {
+          "concept": "NetIncomeLoss",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "assets": {
+          "concept": "Assets",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "equity": {
+          "concept": "StockholdersEquity",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "operating_cash_flow": {
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "capex": {
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "unit": "USD",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        },
+        "eps": {
+          "concept": "EarningsPerShareDiluted",
+          "unit": "USD/shares",
+          "end": "2021-09-25",
+          "filed": "2021-10-29",
+          "form": "10-K",
+          "accession": "0000320193-21-000105"
+        }
+      }
+    },
+    {
+      "year": 2022,
+      "report": "annual",
+      "period_basis": "annual",
+      "metrics": {
+        "revenue": 394328000000,
+        "operating_income": 119437000000,
+        "net_income": 99803000000,
+        "assets": 352755000000,
+        "equity": 50672000000,
+        "operating_cash_flow": 122151000000,
+        "capex": 10708000000,
+        "eps": 6.11
+      },
+      "metric_sources": {
+        "revenue": {
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "operating_income": {
+          "concept": "OperatingIncomeLoss",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "net_income": {
+          "concept": "NetIncomeLoss",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "assets": {
+          "concept": "Assets",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "equity": {
+          "concept": "StockholdersEquity",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "operating_cash_flow": {
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "capex": {
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "unit": "USD",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        },
+        "eps": {
+          "concept": "EarningsPerShareDiluted",
+          "unit": "USD/shares",
+          "end": "2022-09-24",
+          "filed": "2022-10-28",
+          "form": "10-K",
+          "accession": "0000320193-22-000108"
+        }
+      }
+    },
+    {
+      "year": 2023,
+      "report": "annual",
+      "period_basis": "annual",
+      "metrics": {
+        "revenue": 383285000000,
+        "operating_income": 114301000000,
+        "net_income": 96995000000,
+        "assets": 352583000000,
+        "equity": 62146000000,
+        "operating_cash_flow": 110543000000,
+        "capex": 10959000000,
+        "eps": 6.13
+      },
+      "metric_sources": {
+        "revenue": {
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "operating_income": {
+          "concept": "OperatingIncomeLoss",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "net_income": {
+          "concept": "NetIncomeLoss",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "assets": {
+          "concept": "Assets",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "equity": {
+          "concept": "StockholdersEquity",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "operating_cash_flow": {
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "capex": {
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "unit": "USD",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        },
+        "eps": {
+          "concept": "EarningsPerShareDiluted",
+          "unit": "USD/shares",
+          "end": "2023-09-30",
+          "filed": "2023-11-03",
+          "form": "10-K",
+          "accession": "0000320193-23-000106"
+        }
+      }
+    },
+    {
+      "year": 2024,
+      "report": "annual",
+      "period_basis": "annual",
+      "metrics": {
+        "revenue": 391035000000,
+        "operating_income": 123216000000,
+        "net_income": 93736000000,
+        "assets": 364980000000,
+        "equity": 56950000000,
+        "operating_cash_flow": 118254000000,
+        "capex": 9447000000,
+        "eps": 6.08
+      },
+      "metric_sources": {
+        "revenue": {
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "operating_income": {
+          "concept": "OperatingIncomeLoss",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "net_income": {
+          "concept": "NetIncomeLoss",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "assets": {
+          "concept": "Assets",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "equity": {
+          "concept": "StockholdersEquity",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "operating_cash_flow": {
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "capex": {
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "unit": "USD",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        },
+        "eps": {
+          "concept": "EarningsPerShareDiluted",
+          "unit": "USD/shares",
+          "end": "2024-09-28",
+          "filed": "2024-11-01",
+          "form": "10-K",
+          "accession": "0000320193-24-000123"
+        }
+      }
+    },
+    {
+      "year": 2025,
+      "report": "annual",
+      "period_basis": "annual",
+      "metrics": {
+        "revenue": 416161000000,
+        "operating_income": 133050000000,
+        "net_income": 112010000000,
+        "assets": 359241000000,
+        "equity": 73733000000,
+        "operating_cash_flow": 111482000000,
+        "capex": 12715000000,
+        "eps": 7.46
+      },
+      "metric_sources": {
+        "revenue": {
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "operating_income": {
+          "concept": "OperatingIncomeLoss",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "net_income": {
+          "concept": "NetIncomeLoss",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "assets": {
+          "concept": "Assets",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "equity": {
+          "concept": "StockholdersEquity",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "operating_cash_flow": {
+          "concept": "NetCashProvidedByUsedInOperatingActivities",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "capex": {
+          "concept": "PaymentsToAcquirePropertyPlantAndEquipment",
+          "unit": "USD",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        },
+        "eps": {
+          "concept": "EarningsPerShareDiluted",
+          "unit": "USD/shares",
+          "end": "2025-09-27",
+          "filed": "2025-10-31",
+          "form": "10-K",
+          "accession": "0000320193-25-000079"
+        }
+      }
+    }
+  ],
+  "filings": [
+    {
+      "form": "10-K",
+      "filed": "2025-10-31",
+      "accession": "0000320193-25-000079",
+      "primary_document": "aapl-20250927.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2024-11-01",
+      "accession": "0000320193-24-000123",
+      "primary_document": "aapl-20240928.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2023-11-03",
+      "accession": "0000320193-23-000106",
+      "primary_document": "aapl-20230930.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2022-10-28",
+      "accession": "0000320193-22-000108",
+      "primary_document": "aapl-20220924.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2021-10-29",
+      "accession": "0000320193-21-000105",
+      "primary_document": "aapl-20210925.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2020-10-30",
+      "accession": "0000320193-20-000096",
+      "primary_document": "aapl-20200926.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2019-10-31",
+      "accession": "0000320193-19-000119",
+      "primary_document": "a10-k20199282019.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2018-11-05",
+      "accession": "0000320193-18-000145",
+      "primary_document": "a10-k20189292018.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2017-11-03",
+      "accession": "0000320193-17-000070",
+      "primary_document": "a10-k20179302017.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2016-10-26",
+      "accession": "0001628280-16-020309",
+      "primary_document": "a201610-k9242016.htm"
+    },
+    {
+      "form": "10-K",
+      "filed": "2015-10-28",
+      "accession": "0001193125-15-356351",
+      "primary_document": "d17062d10k.htm"
+    }
+  ],
+  "sources": [
+    {
+      "name": "SEC companyfacts",
+      "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "accessed": "2026-10-04T07:49:12.141097+00:00",
+      "note": "Selected standard US-GAAP annual values only; USD and USD/share observations retained with accession metadata by metric."
+    },
+    {
+      "name": "SEC submissions",
+      "url": "https://www.sec.gov/edgar/browse/?CIK=320193",
+      "accessed": "2026-10-04T07:49:12.141097+00:00",
+      "note": "Recent 10-K/20-F filing index."
+    }
+  ],
+  "market": {
+    "price": null,
+    "price_date": null,
+    "market_cap": null,
+    "note": "기준일 주가 미확인"
+  },
+  "analysis": {},
+  "journal": []
+}
