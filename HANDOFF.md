@@ -73,7 +73,15 @@
 >
 > **5번 완료(2026-10-04)**: 사용자 지시로 즉시 실행. ChatGPT Work, 프로젝트 "두루미 주식", **GPT-6 Luna Medium**. Work가 요청 파일 커밋 `d71a5bf` → Actions run `37192418263` 성공·봇 커밋 `0c579d1`(fulfilled, `data/requests/apr-work-test-20261004/snapshot.json`) → Work가 생성기 실행 후 `reports/apr/2026-10-04-work-test.html` 커밋 `2528bc4` 및 대화에 다운로드 첨부. 소요 약 6분. Claude가 같은 명령으로 로컬 재생성해 바이트 동일 확인. 다른 파일 변경 없음. 1회 사용량 비율은 측정하지 않음(시작 전 5시간 한도 4% 남음 표시).
 >
-> 다음: 6번 금요일 10시 예약 생성(사용자 확인 후), 7번 사용 안내.
+> **6번 완료(2026-10-04)**: 사용자 승인 후 https://chatgpt.com/scheduled 에 "[두루미 주식 주간 보고] …" 예약 생성. 매주 금요일 오전 10:00 한국 표준시, GPT-6 Luna Medium, 실행마다 새 채팅. 목록에서 다음 실행 10월 9일 오전 10:00 확인. 예약 폼에는 프로젝트 선택이 없어 지시문에 저장소를 명시함. **예약 실행이 실제로 GitHub에 쓰는지는 10/9 첫 실행 후 확인 필요.** 기존 `Review quarterly data conflicts` 예약은 손대지 않음.
+>
+> **7번**: 사용 안내를 `docs/USAGE.md`로 작성.
+>
+> **짧은 채팅 명령(2026-10-04)**: 사용자 요청으로 ChatGPT 프로젝트 "두루미 주식"의 **프로젝트 지침**에 "짧은 말은 명령으로 보고 `docs/instructions/chat-commands.md`대로 실행" 지시를 저장함(설정 재열람으로 확인). 수집기는 KRX 요청에 corp_code가 없으면 DART corpCode.xml로 자동 조회(`resolve_corp_code`, 가짜 zip으로 파싱만 확인, 실제 DART 조회는 미확인). 이 변경은 PR #2에 있으며 **main 병합 전에는 동작하지 않는다**(Actions와 Work가 main을 읽음). 병합 후 "OO 추가해줘" 실제 실행 확인 필요.
+>
+> **가족 공동 사용 설정(2026-10-04)**: 사용자의 아내가 같은 계정으로 Work를 쓸 예정. 프로젝트 지침을 초보자용으로 교체(쉬운 존댓말, 개발 용어 금지, 시작/종료 안내 형식, 도움말 메뉴, 보유 변경·삭제는 "네" 확인, 매매 결정 대리 금지, 비밀값 요청 금지, 쉬운 실패 안내) — 새로고침 후 930자 저장 확인. `chat-commands.md`에 응대 규칙·도움말·확인 대상·"보고서 줘"·중단 후 이어하기 규칙 추가. 아내용 한 장 안내 페이지: https://claude.ai/artifact/KTMiVh9UoYjqLiGmqJaNDj (비공개, 공유는 사용자가 Share 메뉴로).
+>
+> 다음: 10/9 첫 주간 실행 결과 확인(`reports/weekly/`, Actions·커밋), 2026 1Q 보존, `analysis/apr.json`의 2Q "잠정" 문구 갱신, 시세·컨센서스 등 미수집 항목.
 
 1. `git status`, `git log`, PR #1의 최신 diff를 읽고 최종 검수 수정과 생성 HTML의 일치를 확인한다. 필요하면 새로운 버전 파일명으로 다시 생성한다. 날짜별 보고서 보존 장치를 우회해 기존 보고서를 지우지 않는다.
 2. `.github/workflows/collect.yml`의 동시 Git 변경 처리, 요청 복구, 비밀값 비노출을 검수한다. 테스트 실행은 사용자가 요청할 때 수행한다.
