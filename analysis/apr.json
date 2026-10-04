@@ -118,22 +118,22 @@
     },
     {
       "title": "8. IR 핵심·최근 뉴스·리서치",
-      "body": "(1) 2026-08-05 회사 2Q 자료: 2Q 매출 7,675억원, 영업이익 1,906억원, 해외 비중 92%; 비교기간은 IFRS 18 재작성. (2) 2026-09-10 언론 보도: 뉴욕·LA·런던·파리 순회 MEDICUBE 팝업 계획. 오프라인 접점 확대의 실행 정보이며 매출 성과는 아니다. (3) 2026-09-13 언론 보도: AGE-R 고주파 연구 관련 국제학술지 게재 소식. 독립적인 임상·제품 효능 평가로 확대 해석하지 말고 논문 원문 및 규제 표현을 따로 검토해야 한다. 원 증권사 리포트는 한국투자증권 1건을 열람했으며 다른 보고서/컨센서스 최대 3건 검토는 후속 수집이 필요.",
+      "body": "(1) 2026-08-05 company 2Q IR: 2Q sales KRW 767.5bn and operating income KRW 190.6bn; 2Q overseas mix 92%, while issuer comparatives were restated for IFRS 18. (2) 2026-09-10 press report: planned Medicube pop-ups in New York, Los Angeles, London, and Paris through October; planned exposure is not realized sales. (3) 2026-09-09 report: APR said it would absorb its wholly owned manufacturing subsidiary APR Factory, with merger planned for year-end; verify the regulatory filing and any later completion notice. One original broker note reviewed: Korea Investment & Securities, Aug 6. The analyst cites the company's revised FY2026 guidance; it remains an individual report, not consensus.",
       "sources": [
         {
-          "label": "회사 2Q26 실적 자료",
+          "label": "Company 2Q26 IR release",
           "url": "https://apr-in.aprd.io/ir/APR_Earnings%20Release_2Q26_ENG_vF.pdf"
         },
         {
-          "label": "팝업 관련 보도",
+          "label": "Medicube pop-up plan news, Sep 10",
           "url": "https://www.mt.co.kr/living/2026/09/10/2026091009465482323"
         },
         {
-          "label": "기기 연구 관련 보도",
-          "url": "https://alphasquare.co.kr/home/stock-issue?code=278470&type=news"
+          "label": "APR Factory merger news, Sep 9",
+          "url": "https://search.newspim.com/news/view/20260909000345"
         },
         {
-          "label": "한국투자증권 보고서",
+          "label": "Korea Investment & Securities 2Q26 note",
           "url": "https://securities.koreainvestment.com/main/research/research/StrategyDetail.jsp?id=158017&jkGubun=6"
         }
       ]
@@ -172,5 +172,11 @@
         "rationale": "제품·지역 채널 확대와 높은 이익률 유지; 낙관 가정"
       }
     }
-  }
+  },
+  "limitations": [
+    "한경컨센서스 집계 미수집; 원 발행기관 증권사 보고서 1건 확인",
+    "최근 기업 IR/뉴스 3건 확인; 기사와 회사 발표는 독립 검증을 거치지 않은 항목이 포함될 수 있음",
+    "제품별 장기 단가·원재료비·시장점유율·수급·Google Trends·동일 기준 경쟁사 수치 미확인",
+    "현재가, 취득원가 및 보유 수량 미제공"
+  ]
 }

@@ -1,10 +1,12 @@
-# 구현 재개 체크포인트 (2026-10-04)
+# Implementation checkpoint (2026-10-04)
 
-- Feature branch: feat/stock-analysis-reporting, baseline 7526758.
-- APR evidence: DART 2021–2025 annuals; saved DART 2026 Q1; issuer preliminary 2026 Q2 and 1H data with distinct standalone/YTD basis and IFRS 18 restatement caveat.
-- SEC collector resolves arbitrary listed ticker through SEC company_tickers.json and stores selected annual US-GAAP facts rather than full raw companyfacts.
-- Request pipeline checks configured holdings/watchlist, creates immutable snapshot and compact history packet, and preserves failure status for Actions to save.
-- Output: reports/apr/2026-10-04.html and latest.html; nine detailed analysis sections, finance table, scenario controls and evidence links.
-- Work prompt/instructions: docs/instructions/weekly-run.md and workflows.md. Weekly numeric delta: python3 -m stockdy.cli weekly-diff PREVIOUS.json CURRENT.json --out reports/weekly/YYYY-MM-DD.json.
-- Verified by syntax compilation and inspecting generated summary metadata only; no test suite was added or run. No DART refresh because the prior temporary local credential file is absent in this resumed WSL context. GitHub Actions DART_API_KEY remains configured per prior setup.
-- Not validated here: native Work cloud execution/schedule, Actions execution after merge, current quote, automated news/consensus, portfolio cost-basis personalization. Those stay explicitly unverified/unavailable.
+- Branch: feat/stock-analysis-reporting, based on 7526758; first coherent implementation commit 9d84c36.
+- APR evidence: DART annual 2021–2025, retained 2026 Q1, and separately sourced issuer 2026 Q2/1H values. Disclosure links use exact receipt numbers embedded in the financial rows; no title-based quarter guessing. Distinguish standalone income, YTD cash flow, and instant balance sheet values.
+- Analysis: nine evidence-linked sections, financial history, latest interim table, 24-month scenario assumptions, parent-vs-total net income basis, share-count date, and explicit unavailable data. Current price and cost basis remain unverified.
+- SEC: general ticker-to-CIK lookup and compact selected-fact collector; refreshed AAPL sample is SEC-only and is not in the holdings/watchlist. SEC annual facts require annual filing form/period metadata, matching USD or USD/share units, and 350–380 day duration for flow facts; unsupported amounts remain N/A.
+- Requests: explicit off-list detailed requests supported; scheduled scope remains configured holdings/watchlist. KR requests need DART credentials, US SEC requests do not. Failed request status persists. Existing snapshot retries validate data and recover missing compact evidence packets.
+- Reports: self-contained interactive APR and AAPL examples; safe external-link handling; dated detailed/weekly output is immutable, latest.html is refreshable. Weekly multi-company renderer validates dates, source URLs, category, configured ticker scope, and coverage; omissions force partial status.
+- Work runbook and compact evidence workflow: docs/instructions/workflows.md, docs/instructions/weekly-run.md. Weekly render command: python3 -m stockdy.cli weekly-report data/weekly/YYYY-MM-DD.json --out reports/weekly/YYYY-MM-DD.html.
+- Generated files: reports/apr/2026-10-04.html, reports/apr/latest.html, reports/sec/AAPL.html. History packet: data/history/278470/2026-10-04-apr-initial.json.
+- Checked by Python syntax compilation, a live SEC AAPL collection through the adapter, snapshot provenance validation, and report generation. No test suite was added or run. DART was not refreshed because the prior temporary local credential file is unavailable; the configured Actions secret remains the remote source for future runs.
+- Not verified here: native ChatGPT Work weekly execution/schedule, GitHub Actions after merge, quote collection, consensus automation, or personal cost-basis data. Parent handles Work scheduling and focused review.
