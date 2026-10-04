@@ -87,7 +87,13 @@
 >
 > **네이버증권 연동 (2026-10-04, PR 대기)**: 사용자 결정으로 증권사 API 대신 네이버증권 비공식 API(`m.stock.naver.com/api/stock/<code>/finance/annual`, `/integration`) 사용. 토스증권 Open API는 주문 중심·컨센서스 미확인이라 제외. 수집 시 `naver` 블록(FnGuide 컨센서스, 평균 목표가·투자의견, 5일 수급, 업종 6종목 Forward PER, 최근 리포트) 저장, 실패 시 errors에 기록. 보고서 "시장 평가" 섹션, Forward PER은 컨센서스 우선. `report --refresh-market`, `market <ticker>` CLI, 주간 지시문에 컨센서스·목표가·수급 변화 비교 추가. APR: Forward PER 23.2배(컨센서스), 목표가 +47%. 미국 종목 컨센서스는 미지원. (PR #6 사용자 병합)
 >
-> **자동 테스트 (2026-10-04, PR 대기)**: 사용자 요청으로 `tests/`에 unittest 49개 추가(재무 정규화·TTM, 보고서 내용 규칙·escape·날짜 보고서 불변, 시세·네이버·DART 어댑터(가짜 응답, 키 비노출), corp_code 조회, 요청 처리, universe, 주간 보고, delta, 커밋된 모든 스냅샷 렌더, node 스크립트 문법). `urllib.request.urlopen`을 막아 네트워크 없이 실행. 일부러 버그 3개를 넣어 실패하는 것 확인. `.github/workflows/tests.yml`로 PR·main push마다 실행.
+> **자동 테스트 (2026-10-04, PR 대기)**: 사용자 요청으로 `tests/`에 unittest 49개 추가(재무 정규화·TTM, 보고서 내용 규칙·escape·날짜 보고서 불변, 시세·네이버·DART 어댑터(가짜 응답, 키 비노출), corp_code 조회, 요청 처리, universe, 주간 보고, delta, 커밋된 모든 스냅샷 렌더, node 스크립트 문법). `urllib.request.urlopen`을 막아 네트워크 없이 실행. 일부러 버그 3개를 넣어 실패하는 것 확인. `.github/workflows/tests.yml`로 PR·main push마다 실행. (PR #7 사용자 병합)
+>
+> **코스맥스 실제 테스트 (2026-10-04)**: Work(두루미 주식, Luna Medium) 새 대화에 "코스맥스 관심 종목에 추가해줘".
+> - 1차: "로컬 저장소 없음"으로 실패 → 프로젝트 지침에 0) clone 후 실행 규칙 추가.
+> - 2차: clone·universe add 성공, ChatGPT 자체 안전 심사가 공개 저장소 푸시를 차단 → 사용자가 상시 허락(채팅에 "외부 저장 허용해" 회신, 프로젝트 지침 8) 저장 허락 추가, 1,239자 저장 확인).
+> - 결과: `163e96b` 관심 등록 → `c7d21cb` 요청 → Actions `cf65c09` 수집(corp_code 01009789 자동 조회, 2026 1Q·2Q, 종가, 네이버 컨센서스·수급·업종 모두 실제 성공) → `analysis/cosmax.json`(as_of, 점검표 6, forward=consensus) → `reports/cosmax/2026-10-04.html`·`latest.html`. Claude 재생성과 바이트 동일. 대화 답변 ①~④ 형식·다운로드 첨부 정상. 약 11분.
+> - 발견: 이전 "GitHub 작업 테스트" 대화의 "클래시스 분석해줘"는 지침 적용 전이라 대화로만 답하고 저장소 절차를 거치지 않음(저장소에 클래시스 자료 없음). 보고서 폴더가 `reports/cosmax`(이름)라 `universe list`가 못 찾던 문제 → 헤더 티커로 찾도록 수정. 모바일 앱에서 Work 클라우드 실행 여부는 미확인.
 >
 > 다음: 10/9 첫 주간 실행 결과 확인(`reports/weekly/`, Actions·커밋), 2026 1Q 보존, `analysis/apr.json`의 2Q "잠정" 문구 갱신, 시세·컨센서스 등 미수집 항목.
 

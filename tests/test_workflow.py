@@ -104,6 +104,15 @@ class UniverseTest(TempRepo):
         self.assertEqual(universe.remove("192820", path=p)["status"], "not_found")
         self.assertEqual(json.loads(p.read_text(encoding="utf-8"))["validation_fixtures"], [{"ticker": "AAPL"}])
 
+    def test_latest_report_found_by_folder_or_header(self):
+        (self.root / "reports/192820").mkdir(parents=True)
+        (self.root / "reports/192820/latest.html").write_text("x", encoding="utf-8")
+        (self.root / "reports/cosmetic").mkdir(parents=True)
+        (self.root / "reports/cosmetic/latest.html").write_text("<nav><span>두루미 주식</span><span>자료 2026 · 161890</span></nav>", encoding="utf-8")
+        self.assertEqual(universe.latest_report("192820", self.root), "reports/192820/latest.html")
+        self.assertEqual(universe.latest_report("161890", self.root), "reports/cosmetic/latest.html")
+        self.assertIsNone(universe.latest_report("000000", self.root))
+
     def test_validation_and_limits(self):
         p = self.path()
         for args in (("19282", "x", "KRX"), ("NVDA", "x", "KOSPI"), ("nvda!", "x", "NASDAQ")):
