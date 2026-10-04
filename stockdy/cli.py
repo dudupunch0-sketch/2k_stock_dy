@@ -4,6 +4,7 @@ from pathlib import Path
 from .core import ROOT,build_report,collect_apr,collect_sec
 from .delta import write_delta
 from .weekly import build_weekly_report
+from . import universe
 
 def main():
  p=argparse.ArgumentParser(description="Stockdy research collection and report tools"); sub=p.add_subparsers(dest="cmd",required=True)
@@ -12,7 +13,21 @@ def main():
  r=sub.add_parser("report");r.add_argument("data",type=Path);r.add_argument("--analysis",type=Path);r.add_argument("--out",type=Path,default=ROOT/"reports/apr/latest.html")
  d=sub.add_parser("weekly-diff");d.add_argument("previous",type=Path);d.add_argument("current",type=Path);d.add_argument("--out",type=Path,default=ROOT/"reports/weekly/latest.json")
  w=sub.add_parser("weekly-report");w.add_argument("data",type=Path);w.add_argument("--out",type=Path)
+ u=sub.add_parser("universe",help="list/add/remove holdings and watchlist");us=u.add_subparsers(dest="action",required=True)
+ us.add_parser("list")
+ ua=us.add_parser("add");ua.add_argument("ticker");ua.add_argument("--name",required=True);ua.add_argument("--market",required=True,choices=universe.MARKETS);ua.add_argument("--kind",default="watchlist",choices=universe.LISTS);ua.add_argument("--corp-code");ua.add_argument("--cik");ua.add_argument("--notes")
+ ur=us.add_parser("remove");ur.add_argument("ticker")
+ t=sub.add_parser("analysis-template",help="write a blank analysis file to fill in");t.add_argument("out",type=Path)
  a=p.parse_args()
+ if a.cmd=="universe":
+  try:
+   result=universe.listing() if a.action=="list" else (universe.add(a.ticker,a.name,a.market,a.kind,a.corp_code,a.cik,a.notes) if a.action=="add" else universe.remove(a.ticker))
+  except ValueError as exc: p.exit(2,f"error: {exc}\n")
+  print(json.dumps(result,ensure_ascii=False,indent=2));return
+ if a.cmd=="analysis-template":
+  out=a.out if a.out.is_absolute() else ROOT/a.out
+  if out.exists(): p.exit(2,f"error: {out} already exists\n")
+  out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(universe.TEMPLATE,ensure_ascii=False,indent=2)+"\n",encoding="utf-8");print(f"Wrote template -> {out}");return
  if a.cmd=="collect-apr":
   key=os.environ.get("DART_API_KEY")
   if not key:p.error("DART_API_KEY environment variable is required")
