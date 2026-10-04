@@ -9,7 +9,7 @@
 - 원격: https://github.com/dudupunch0-sketch/2k_stock_dy
 - 구현 브랜치: `feat/stock-analysis-reporting`
 - Draft PR: https://github.com/dudupunch0-sketch/2k_stock_dy/pull/1
-- main에는 제작안 문서만 있으며, 구현 PR은 **아직 병합하지 않았다**.
+- **2026-10-04 Claude 재개**: collect.yml 저장 단계의 빠진 셸 변수(`$branch`, `$attempt`)를 복구(`2eae3d1`)한 뒤 사용자 승인으로 PR #1을 main에 병합(`e772a3d`). 이후 작업 브랜치는 `main`.
 - 구현 커밋: `9d84c36`, `dc1aded`, `75421e8`. 최종 검수 수정은 `b0d3234`로 커밋/푸시 완료했다. 이후 인수인계 문서 커밋은 `git log`로 확인한다.
 - ChatGPT 프로젝트 미러의 `sources/`와 AGENTS.md는 작업 저장소가 아니며 수정하지 않는다.
 
@@ -59,7 +59,17 @@
 - 부모는 코드·Git 상태를 검수하고 Chrome에서 APR HTML이 열리며 시나리오 값이 표시되는 것을 확인했다. 전체 UI/모든 산식/모든 실패 경로 검증 완료라는 뜻은 아니다.
 - 최신 검수 수정: ROE 분자/분모 기준 정합성, 연속 회계연도·양의 자본 조건, YTD EPS 혼입 제거, BS 시점 값 분리, 주당 가격 표시, 표 가로 스크롤, Actions 충돌 재시도。`b0d3234`에 수정 및 APR 산출물 재생성이 포함됐다. 부모가 이 마지막 수정 후 전체 화면/실행 경로를 다시 확인하지는 않았다.
 
+### 2026-10-04 Claude 재개 시 확인한 것
+
+- 기존 `reports/apr/latest.html`·`2026-10-04.html`은 `b0d3234` 이후 코드로 재생성한 결과와 바이트 동일함을 확인.
+- collect.yml: YAML 파싱·`bash -n` 통과. DART 키가 담긴 URL은 예외 메시지에서 제거됨(`dart_json`).
+- 병합 push로 Actions run `37187969573` **성공**. 결과 커밋 `f68a461`: `requests/apr-refresh-20261004.json` fulfilled, `data/requests/apr-refresh-20261004/snapshot.json`, `data/history/278470/2026-10-04-apr-refresh-20261004.json`. DART 2021–2025 연간 + 2026 반기보고서(2Q, 공시 2026-08-14; OCF·CAPEX·자산·자본·EPS 포함) 실제 수집.
+- 새 스냅샷으로 `reports/apr/2026-10-04-dart-refresh.html` 생성, `latest.html` 갱신. 브라우저에서 표시 확인. 자동 테스트는 실행하지 않음.
+- 남은 점: 새 스냅샷에는 2026 1Q가 없음(수집기가 최신 분기만 가져옴, 이전 initial 스냅샷에는 보존 1Q 존재). `analysis/apr.json` 문구는 2Q를 아직 "잠정 발표"로 서술 — 반기보고서 확정 수치와 값은 일치하나 문구 갱신 필요.
+
 ## 5. 반드시 이어서 할 일
+
+> 1–4번은 2026-10-04 Claude 재개에서 완료(위 확인 내역). 5번부터 이어간다.
 
 1. `git status`, `git log`, PR #1의 최신 diff를 읽고 최종 검수 수정과 생성 HTML의 일치를 확인한다. 필요하면 새로운 버전 파일명으로 다시 생성한다. 날짜별 보고서 보존 장치를 우회해 기존 보고서를 지우지 않는다.
 2. `.github/workflows/collect.yml`의 동시 Git 변경 처리, 요청 복구, 비밀값 비노출을 검수한다. 테스트 실행은 사용자가 요청할 때 수행한다.
