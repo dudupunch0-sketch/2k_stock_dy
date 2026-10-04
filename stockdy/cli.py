@@ -9,7 +9,7 @@ def main():
  p=argparse.ArgumentParser(description="Stockdy research collection and report tools"); sub=p.add_subparsers(dest="cmd",required=True)
  c=sub.add_parser("collect-apr");c.add_argument("--out",type=Path,default=ROOT/"data/apr/latest.json")
  s=sub.add_parser("collect-sec");s.add_argument("ticker",nargs="?",default="AAPL");s.add_argument("--out",type=Path)
- r=sub.add_parser("report");r.add_argument("data",type=Path);r.add_argument("--out",type=Path,default=ROOT/"reports/apr/latest.html")
+ r=sub.add_parser("report");r.add_argument("data",type=Path);r.add_argument("--analysis",type=Path);r.add_argument("--out",type=Path,default=ROOT/"reports/apr/latest.html")
  d=sub.add_parser("weekly-diff");d.add_argument("previous",type=Path);d.add_argument("current",type=Path);d.add_argument("--out",type=Path,default=ROOT/"reports/weekly/latest.json")
  w=sub.add_parser("weekly-report");w.add_argument("data",type=Path);w.add_argument("--out",type=Path)
  a=p.parse_args()
@@ -20,7 +20,15 @@ def main():
  elif a.cmd=="collect-sec":
   data=collect_sec(a.ticker,a.out);print(f"Collected {len(data['reports'])} SEC annual periods for {data['company']['ticker']}")
  elif a.cmd=="report":
-  data=json.loads(a.data.read_text(encoding="utf-8"));build_report(data,a.out);print(f"Rendered report -> {a.out}")
+  data_path=a.data if a.data.is_absolute() else ROOT/a.data
+  data=json.loads(data_path.read_text(encoding="utf-8"))
+  if a.analysis:
+   analysis_path=a.analysis if a.analysis.is_absolute() else ROOT/a.analysis
+   analysis_root=(ROOT/"analysis").resolve();analysis_path=analysis_path.resolve()
+   if analysis_root not in analysis_path.parents or not analysis_path.is_file(): p.error("--analysis must name an existing JSON file under analysis/")
+   data["analysis"]=json.loads(analysis_path.read_text(encoding="utf-8"))
+  output=a.out if a.out.is_absolute() else ROOT/a.out
+  build_report(data,output);print(f"Rendered report -> {output}")
  elif a.cmd=="weekly-diff":
   result=write_delta(a.previous,a.current,a.out);print(f"Compared {result['ticker']} evidence: {len(result['changes'])} changed facts -> {a.out}")
  elif a.cmd=="weekly-report":

@@ -4,7 +4,7 @@
 
 Manual analysis does not require adding a security to the holding/watchlist universe. After the user explicitly asks for analysis, create requests/<id>.json with request_id, kind=detailed, user_requested=true, market (KRX, NASDAQ, NYSE, or US), ticker, date, and the market-specific identifier (corp_code for KRX). Never set user_requested for a scheduled/automated job. Workflows support only explicit requests and configured KRX holdings/watchlist for DART collection; US SEC collection uses the SEC directory and does not need DART_API_KEY. AAPL is a validation sample only and must not be inserted in the actual tracking list.
 
-After completion, read data/requests/<id>/snapshot.json and compact data/history/<ticker>/<date>-<id>.json. Work should replace/extend analysis/<ticker>.json from source-backed evidence, create reports/<ticker>/<date>.html, preserve older report versions, then update latest.html. Keep raw filings out of the model packet unless checking a specific account or filing.
+After completion, read data/requests/<id>/snapshot.json and compact data/history/<ticker>/<date>-<id>.json. Work should replace/extend analysis/<ticker>.json from source-backed evidence, then render the unchanged collected snapshot with the explicit analysis file: python3 -m stockdy.cli report data/requests/<id>/snapshot.json --analysis analysis/<ticker>.json --out reports/<ticker>/<date>.html. The report command reads and overlays analysis in memory; it does not modify the collected snapshot. Preserve older report versions, then refresh reports/<ticker>/latest.html with the same command and --out latest.html. Keep raw filings out of the model packet unless checking a specific account or filing.
 
 Every number has a source and period/currency/unit basis. Separate issuer, regulator, audited/reported facts, issuer guidance, individual analyst forecasts, consensus, and AI scenario. Missing data must stay N/A with reason. For 5-year financial data, use exact reporting-period metrics; do not substitute current shares or price into historical EPS/PER/PBR. Use average same-basis equity for ROE only when available. For quarter filings, distinguish standalone income statement values, YTD cash flow values, and balance-sheet date values. Never compare cumulative periods as if quarterly.
 
@@ -24,6 +24,6 @@ Actions injects DART_API_KEY only for domestic filing collection. Do not print, 
 
 python3 -m stockdy.cli collect-apr
 python3 -m stockdy.cli collect-sec AAPL
-python3 -m stockdy.cli report data/requests/apr-initial/snapshot.json --out reports/apr/latest.html
+python3 -m stockdy.cli report data/requests/apr-initial/snapshot.json --analysis analysis/apr.json --out reports/apr/latest.html
 python3 -m stockdy.cli weekly-diff OLD.json NEW.json --out reports/weekly/diff.json
 python3 -m stockdy.cli weekly-report data/weekly/YYYY-MM-DD.json --out reports/weekly/YYYY-MM-DD.html

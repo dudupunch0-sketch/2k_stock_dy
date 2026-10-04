@@ -17,7 +17,7 @@ Reusable public-company collection, source-normalized evidence, analysis inputs,
 
 python3 -m stockdy.cli collect-apr
 python3 -m stockdy.cli collect-sec AAPL
-python3 -m stockdy.cli report data/apr/latest.json --out reports/apr/latest.html
+python3 -m stockdy.cli report data/apr/latest.json --analysis analysis/apr.json --out reports/apr/latest.html
 python3 -m stockdy.cli weekly-diff PREVIOUS.json CURRENT.json --out reports/weekly/diff.json
 python3 -m stockdy.cli weekly-report data/weekly/YYYY-MM-DD.json --out reports/weekly/YYYY-MM-DD.html
 
