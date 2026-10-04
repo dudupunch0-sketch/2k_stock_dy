@@ -64,11 +64,16 @@ def remove(ticker, path: Path = PATH):
 LEGACY_FOLDERS = {"278470": "apr"}
 
 
-def latest_report(ticker):
+def latest_report(ticker, root: Path = None):
+    root = root or ROOT
     for folder in (LEGACY_FOLDERS.get(ticker), ticker.lower(), ticker.upper()):
         if not folder: continue
-        candidate = ROOT/"reports"/folder/"latest.html"
-        if candidate.exists(): return str(candidate.relative_to(ROOT))
+        candidate = root/"reports"/folder/"latest.html"
+        if candidate.exists(): return str(candidate.relative_to(root))
+    # Reports may live under a name folder (e.g. reports/cosmax); the header carries the ticker.
+    for candidate in sorted((root/"reports").glob("*/latest.html")):
+        if f"· {ticker}</span></nav>" in candidate.read_text(encoding="utf-8", errors="ignore")[:4000]:
+            return str(candidate.relative_to(root))
     return None
 
 
