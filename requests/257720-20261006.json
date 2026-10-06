@@ -7,5 +7,9 @@
   "user_requested": true,
   "period_years": 5,
   "requested_at": "2026-10-06",
-  "status": "pending"
+  "status": "fulfilled",
+  "corp_code": "00982023",
+  "result": "data/requests/257720-20261006/snapshot.json",
+  "evidence_packet": "data/history/257720/2026-10-06-257720-20261006.json",
+  "completed_at": "2026-10-06T05:50:41.682879+00:00"
 }

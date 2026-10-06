@@ -1,0 +1,242 @@
+{
+  "request_id": "483650-20261006",
+  "source_snapshot": "data/requests/483650-20261006/snapshot.json",
+  "company": {
+    "name": "(주)달바글로벌",
+    "ticker": "483650",
+    "corp_code": "01649204",
+    "market": "KRX",
+    "currency": "KRW",
+    "shares_outstanding": 12392665,
+    "shares_as_of": "2025-12-31",
+    "fiscal_year_end": "12-31"
+  },
+  "as_of": "2026-10-06",
+  "collected_at": "2026-10-06T05:55:18.428630+00:00",
+  "periods": [
+    {
+      "year": 2024,
+      "report": "annual",
+      "basis": "annual",
+      "published": null,
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20250318000466",
+      "metrics": {
+        "revenue": 309062616157,
+        "operating_income": 59844712688,
+        "net_income": 15408977423,
+        "net_income_parent": 15408977423,
+        "operating_cash_flow": 15809001299,
+        "capex": -834611130,
+        "liabilities": 34039092723,
+        "cash": 54002975233,
+        "assets": 136108165193,
+        "equity": 102069072470,
+        "equity_parent": 102069072470,
+        "weighted_shares": null,
+        "eps": 1445,
+        "eps_basis": "희석"
+      },
+      "ytd_metrics": {
+        "revenue": 309062616157,
+        "operating_income": 59844712688,
+        "net_income": 15408977423,
+        "net_income_parent": 15408977423,
+        "operating_cash_flow": 15809001299,
+        "capex": -834611130
+      },
+      "standalone_metrics": {
+        "revenue": 309062616157,
+        "operating_income": 59844712688,
+        "net_income": 15408977423,
+        "net_income_parent": 15408977423,
+        "operating_cash_flow": 15809001299,
+        "capex": -834611130
+      },
+      "instant_metrics": {
+        "assets": 136108165193,
+        "liabilities": 34039092723,
+        "cash": 54002975233,
+        "equity": 102069072470,
+        "equity_parent": 102069072470
+      },
+      "metric_sources": {}
+    },
+    {
+      "year": 2025,
+      "report": "annual",
+      "basis": "annual",
+      "published": "20260407",
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260407001978",
+      "metrics": {
+        "revenue": 519735447906,
+        "operating_income": 101469415203,
+        "net_income": 79053534113,
+        "net_income_parent": 79053534113,
+        "operating_cash_flow": 68482449044,
+        "capex": -301490748,
+        "liabilities": 56779849718,
+        "cash": 100992795264,
+        "assets": 255334642397,
+        "equity": 198554792679,
+        "equity_parent": 198554792679,
+        "weighted_shares": null,
+        "eps": 6315,
+        "eps_basis": "희석"
+      },
+      "ytd_metrics": {
+        "revenue": 519735447906,
+        "operating_income": 101469415203,
+        "net_income": 79053534113,
+        "net_income_parent": 79053534113,
+        "operating_cash_flow": 68482449044,
+        "capex": -301490748
+      },
+      "standalone_metrics": {
+        "revenue": 519735447906,
+        "operating_income": 101469415203,
+        "net_income": 79053534113,
+        "net_income_parent": 79053534113,
+        "operating_cash_flow": 68482449044,
+        "capex": -301490748
+      },
+      "instant_metrics": {
+        "assets": 255334642397,
+        "liabilities": 56779849718,
+        "cash": 100992795264,
+        "equity": 198554792679,
+        "equity_parent": 198554792679
+      },
+      "metric_sources": {}
+    },
+    {
+      "year": 2026,
+      "report": "1Q",
+      "basis": "income_quarter_standalone_cashflow_ytd_balance_sheet_instant",
+      "published": "20260513",
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260513000356",
+      "metrics": {
+        "revenue": 171242032413,
+        "operating_income": 45090464054,
+        "net_income": 36337195796,
+        "net_income_parent": 36337195796,
+        "operating_cash_flow": 40040024809,
+        "capex": -461983054,
+        "liabilities": 66621059200,
+        "cash": 77094801411,
+        "assets": 298481034907,
+        "equity": 231859975707,
+        "equity_parent": 231859975707,
+        "weighted_shares": null,
+        "eps": 2836,
+        "eps_basis": "희석"
+      },
+      "ytd_metrics": {
+        "revenue": 171242032413,
+        "operating_income": 45090464054,
+        "net_income": 36337195796,
+        "net_income_parent": 36337195796,
+        "operating_cash_flow": 40040024809,
+        "capex": -461983054,
+        "eps": 2836
+      },
+      "standalone_metrics": {
+        "revenue": 171242032413,
+        "operating_income": 45090464054,
+        "net_income": 36337195796,
+        "net_income_parent": 36337195796,
+        "operating_cash_flow": null,
+        "capex": null
+      },
+      "instant_metrics": {
+        "assets": 298481034907,
+        "liabilities": 66621059200,
+        "cash": 77094801411,
+        "equity": 231859975707,
+        "equity_parent": 231859975707
+      },
+      "metric_sources": {}
+    },
+    {
+      "year": 2026,
+      "report": "2Q",
+      "basis": "income_quarter_standalone_cashflow_ytd_balance_sheet_instant",
+      "published": "20260814",
+      "source_url": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260814001262",
+      "metrics": {
+        "revenue": 186860908470,
+        "operating_income": 47240874551,
+        "net_income": 38059528099,
+        "net_income_parent": 38059528099,
+        "operating_cash_flow": 81305175245,
+        "capex": -965829486,
+        "liabilities": 88131618034,
+        "cash": 92702943251,
+        "assets": 339944196483,
+        "equity": 251812578449,
+        "equity_parent": 251812578449,
+        "weighted_shares": null,
+        "eps": 2969,
+        "eps_basis": "희석"
+      },
+      "ytd_metrics": {
+        "revenue": 358102940883,
+        "operating_income": 92331338605,
+        "net_income": 74396723895,
+        "net_income_parent": 74396723895,
+        "operating_cash_flow": 81305175245,
+        "capex": -965829486,
+        "eps": 5806
+      },
+      "standalone_metrics": {
+        "revenue": 186860908470,
+        "operating_income": 47240874551,
+        "net_income": 38059528099,
+        "net_income_parent": 38059528099,
+        "operating_cash_flow": null,
+        "capex": null
+      },
+      "instant_metrics": {
+        "assets": 339944196483,
+        "liabilities": 88131618034,
+        "cash": 92702943251,
+        "equity": 251812578449,
+        "equity_parent": 251812578449
+      },
+      "metric_sources": {}
+    }
+  ],
+  "sources": [
+    {
+      "name": "OpenDART",
+      "url": "https://opendart.fss.or.kr/",
+      "accessed": "2026-10-06T05:55:12.473637+00:00",
+      "disclosure_date": null,
+      "note": "Official filing-derived consolidated financial statements."
+    },
+    {
+      "name": "Yahoo Finance 시세",
+      "url": "https://finance.yahoo.com/quote/483650.KS",
+      "accessed": "2026-10-06T05:55:12.527841+00:00",
+      "disclosure_date": "2026-10-06",
+      "note": "최근 종가. 비공식 시세이며 지연될 수 있음."
+    },
+    {
+      "name": "네이버증권 (FnGuide 컨센서스·수급·업종 비교)",
+      "url": "https://m.stock.naver.com/domestic/stock/483650/total",
+      "accessed": "2026-10-06T05:55:12.527849+00:00",
+      "disclosure_date": "2026-10-02",
+      "note": "비공식 경로. 증권사 추정치 집계이며 확정 실적이 아님."
+    }
+  ],
+  "market": {
+    "price": 179700.0,
+    "price_date": "2026-10-06",
+    "market_cap": 2226961900500.0,
+    "symbol": "483650.KS",
+    "week52_high": 283000.0,
+    "week52_low": 116200.0,
+    "source_url": "https://finance.yahoo.com/quote/483650.KS",
+    "note": "Yahoo Finance 최근 종가(비공식 시세, 지연 가능) · 시가총액은 공시 주식수 기준 추정"
+  },
+  "analysis": {}
+}
