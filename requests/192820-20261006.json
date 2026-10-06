@@ -1,0 +1,12 @@
+{
+  "request_id": "192820-20261006",
+  "ticker": "192820",
+  "market": "KRX",
+  "company_name": "코스맥스",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-10-06",
+  "status": "pending",
+  "corp_code": "01009789"
+}

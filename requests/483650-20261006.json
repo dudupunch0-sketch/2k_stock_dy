@@ -1,0 +1,11 @@
+{
+  "request_id": "483650-20261006",
+  "ticker": "483650",
+  "market": "KRX",
+  "company_name": "달바글로벌",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-10-06",
+  "status": "pending"
+}

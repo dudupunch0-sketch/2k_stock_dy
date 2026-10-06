@@ -1,0 +1,11 @@
+{
+  "request_id": "161890-20261006",
+  "ticker": "161890",
+  "market": "KRX",
+  "company_name": "한국콜마",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-10-06",
+  "status": "pending"
+}
