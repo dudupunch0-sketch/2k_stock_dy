@@ -7,6 +7,9 @@
   "user_requested": true,
   "period_years": 5,
   "requested_at": "2026-11-11",
-  "status": "pending",
-  "corp_code": "00189653"
+  "status": "fulfilled",
+  "corp_code": "00189653",
+  "result": "data/requests/lxpantos-20261111/snapshot.json",
+  "evidence_packet": "data/history/LXPANTOS/2026-11-11-lxpantos-20261111.json",
+  "completed_at": "2026-11-11T12:23:06.405313+00:00"
 }
