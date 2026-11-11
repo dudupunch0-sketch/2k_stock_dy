@@ -1,0 +1,12 @@
+{
+  "request_id": "lxpantos-20261111",
+  "ticker": "LXPANTOS",
+  "market": "KRX",
+  "company_name": "LX판토스",
+  "kind": "detailed",
+  "user_requested": true,
+  "period_years": 5,
+  "requested_at": "2026-11-11",
+  "status": "pending",
+  "corp_code": "00189653"
+}
